@@ -5,6 +5,8 @@ import Login from './components/Login/login';
 import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
 import SignIn from './components/signIn/signIn';
+import ChatHeader from './components/chatPage/chatHeader/chatHeader';
+import ChatBody from './components/chatPage/chatBody/chatBody';
 
 export default function HomeScreen() {
   const Stack = createStackNavigator();
@@ -38,6 +40,11 @@ export default function HomeScreen() {
           <Stack.Screen
             name="SignIn"
             component={SignIn}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="ChatBody"
+            component={ChatBody}
             options={{headerShown: false}}
           />
         </Stack.Navigator>
