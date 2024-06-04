@@ -7,6 +7,8 @@ import {NavigationContainer} from '@react-navigation/native';
 import SignIn from './components/signIn/signIn';
 import ChatHeader from './components/chatPage/chatHeader/chatHeader';
 import ChatBody from './components/chatPage/chatBody/chatBody';
+import ChatScreen from './components/chatPage/chatScreen/chatScreen';
+import ChatScreenHeader from './components/chatPage/chatScreen/chatScreenHeader/chatScreenHeader';
 
 export default function HomeScreen() {
   const Stack = createStackNavigator();
@@ -47,6 +49,16 @@ export default function HomeScreen() {
             component={ChatBody}
             options={{headerShown: false}}
           />
+          <Stack.Screen
+            name="ChatScreen"
+            component={ChatScreen}
+            options={{headerShown: false}}
+          />
+          {/* <Stack.Screen
+            name="ChatScreenHeader"
+            component={ChatScreenHeader}
+            options={{headerShown: false}}
+          /> */}
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>

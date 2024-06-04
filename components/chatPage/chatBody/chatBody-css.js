@@ -4,8 +4,13 @@ export const chatBody = StyleSheet.create({
   Container: {
     flex: 1,
     backgroundColor: '#2C2929',
+    paddingTop: 20,
+    paddingLeft: 15,
   },
   Padding: {
-    padding: 15,
+    padding: 10,
+  },
+  usersStyle: {
+    paddingLeft: 15,
   },
 });
