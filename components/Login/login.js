@@ -8,13 +8,53 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
 } from 'react-native';
 import {loginStyles} from './login-css';
 import Icons from 'react-native-vector-icons/Entypo';
+import axios from 'axios';
 
 const Login = props => {
+  const [inputData, setInputData] = useState({
+    mobileNumber: '',
+    password: '',
+  });
+
+  const handleInputChange = (name, value) => {
+    setInputData(prev => ({...prev, [name]: value}));
+  };
+
+  const onSubmit = async () => {
+    const {mobileNumber, password} = inputData;
+    if (!mobileNumber || !password) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    } else {
+      try {
+        const formData = {
+          mobileNumber,
+          password,
+        };
+        const {data} = await axios.post(
+          'http://10.60.36.78:5000/auth/login',
+          formData,
+        );
+
+        if (data.status == 'ok') {
+          Alert.alert('Success', 'Login successful');
+          props.navigation.navigate('ChatBody');
+          // setInputData({
+          //   mobileNumber: '',
+          //   password: '',
+          // });
+        } else Alert.alert('Login failed', 'Insert a valid input');
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [password, setPassword] = useState('');
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
@@ -31,9 +71,11 @@ const Login = props => {
           </View>
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
             <TextInput
-              placeholder="Email"
+              placeholder="Enter number"
               placeholderTextColor="white"
               style={loginStyles.textInput}
+              keyboardType="numeric"
+              onChangeText={value => handleInputChange('mobileNumber', value)}
             />
           </View>
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
@@ -50,8 +92,9 @@ const Login = props => {
                 placeholder="Password"
                 placeholderTextColor="white"
                 secureTextEntry={!passwordVisible}
-                value={password}
-                onChangeText={setPassword}
+                value={inputData.password}
+                // onChangeText={setPassword}
+                onChangeText={value => handleInputChange('password', value)}
                 style={{
                   flex: 1,
                   color: 'white',
@@ -74,7 +117,8 @@ const Login = props => {
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
             <TouchableOpacity
               style={loginStyles.loginButton}
-              onPress={() => props.navigation.navigate('ChatBody')}>
+              // onPress={() => props.navigation.navigate('ChatBody')}>
+              onPress={onSubmit}>
               <Text style={{fontSize: 20, fontWeight: 500}}>Login</Text>
             </TouchableOpacity>
           </View>

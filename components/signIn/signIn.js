@@ -8,30 +8,78 @@ import {
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import {loginStyles} from '../Login/login-css';
 import {signInStyles} from './signIn-css';
 import Icons from 'react-native-vector-icons/Entypo';
+import axios from 'axios';
 
 // import {TextInput} from 'react-native-paper';
 
 const SignIn = props => {
+  const [inputData, setInputData] = useState({
+    name: '',
+    mobileNumber: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  const handleInputChange = (name, value) => {
+    setInputData(prev => ({...prev, [name]: value}));
+  };
+
+  const onSubmit = async () => {
+    const {name, mobileNumber, email, password, confirmPassword} = inputData;
+
+    if (!name || !mobileNumber || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    try {
+      const formData = {
+        name,
+        mobileNumber,
+        email,
+        password,
+        // confirmPassword,
+      };
+      const response = await axios.post(
+        'http://10.60.36.78:5000/auth/signup',
+        formData,
+      );
+
+      if (response.status === 200) {
+        Alert.alert('Success', 'Sign up successful');
+        props.navigation.navigate('Login');
+      } else {
+        Alert.alert('Error', 'Sign up failed');
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const [passwordVisible, setPasswordVisible] = useState({
     password: false,
     confirmPassword: false,
   });
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setconfirmPassword] = useState('');
 
   const togglePasswordVisibility = () => {
     setPasswordVisible({
-      ...password,
+      ...passwordVisible,
       password: !passwordVisible.password,
     });
   };
   const toggleConfirmPasswordVisibility = () => {
     setPasswordVisible({
-      ...password,
+      ...passwordVisible,
       confirmPassword: !passwordVisible.confirmPassword,
     });
   };
@@ -50,6 +98,7 @@ const SignIn = props => {
               placeholder="Name"
               placeholderTextColor="white"
               style={loginStyles.textInput}
+              onChangeText={value => handleInputChange('name', value)}
             />
           </View>
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
@@ -65,6 +114,7 @@ const SignIn = props => {
                 paddingHorizontal: 20, // Optional: Add padding for better appearance
                 borderRadius: 30,
               }}
+              onChangeText={value => handleInputChange('mobileNumber', value)}
             />
           </View>
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
@@ -80,6 +130,7 @@ const SignIn = props => {
                 paddingHorizontal: 20, // Optional: Add padding for better appearance
                 borderRadius: 30,
               }}
+              onChangeText={value => handleInputChange('email', value)}
             />
           </View>
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
@@ -96,8 +147,9 @@ const SignIn = props => {
                 placeholder="Password"
                 placeholderTextColor="white"
                 secureTextEntry={!passwordVisible.password}
-                value={password}
-                onChangeText={setPassword}
+                value={inputData.password}
+                // onChangeText={setPassword}
+                onChangeText={value => handleInputChange('password', value)}
                 style={{
                   flex: 1,
                   color: 'white',
@@ -127,11 +179,13 @@ const SignIn = props => {
                 borderRadius: 30,
               }}>
               <TextInput
-                placeholder="Password"
+                placeholder="Confirm Password"
                 placeholderTextColor="white"
                 secureTextEntry={!passwordVisible.confirmPassword}
-                value={confirmPassword}
-                onChangeText={setconfirmPassword}
+                value={inputData.confirmPassword}
+                onChangeText={value =>
+                  handleInputChange('confirmPassword', value)
+                }
                 style={{
                   flex: 1,
                   color: 'white',
@@ -156,7 +210,8 @@ const SignIn = props => {
           <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
             <TouchableOpacity
               style={signInStyles.signUpButton}
-              onPress={() => props.navigation.navigate('Login')}>
+              // onPress={() => props.navigation.navigate('Login')}>
+              onPress={onSubmit}>
               <Text style={{fontSize: 20, fontWeight: 500}}>Signup</Text>
             </TouchableOpacity>
           </View>

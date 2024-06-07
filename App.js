@@ -5,7 +5,7 @@ import Login from './components/Login/login';
 import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
 import SignIn from './components/signIn/signIn';
-import ChatHeader from './components/chatPage/chatHeader/chatHeader';
+
 import ChatBody from './components/chatPage/chatBody/chatBody';
 import ChatScreen from './components/chatPage/chatScreen/chatScreen';
 import ChatScreenHeader from './components/chatPage/chatScreen/chatScreenHeader/chatScreenHeader';
@@ -54,11 +54,6 @@ export default function HomeScreen() {
             component={ChatScreen}
             options={{headerShown: false}}
           />
-          {/* <Stack.Screen
-            name="ChatScreenHeader"
-            component={ChatScreenHeader}
-            options={{headerShown: false}}
-          /> */}
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>

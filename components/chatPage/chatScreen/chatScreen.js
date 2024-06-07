@@ -47,24 +47,56 @@ const ChatScreen = props => {
     },
   ];
 
-  const [userDatas, setuserDatas] = useState([]);
+  const [userDatas, setUserDatas] = useState({});
   const GetDataById = id => {
     const data = userData.find(i => i.id == id);
-    // return data;
-    setuserDatas(data);
+    setUserDatas(data);
   };
 
   useEffect(() => {
     if (props.route.params) {
       GetDataById(props.route.params.id);
     }
-  }, []);
+  }, [props.route.params]);
+
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+
+  const handleInput = text => {
+    setInputText(text);
+  };
+
+  const handleSend = () => {
+    if (inputText.trim()) {
+      setMessages([
+        ...messages,
+        {id: messages.length.toString(), text: inputText},
+      ]);
+      setInputText('');
+    }
+  };
 
   return (
-    <KeyboardAvoidingView style={{flex: 1}}>
+    <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
         <ChatScreenHeader props={props} userDatas={userDatas} />
-        <View style={chatScreen.Container}></View>
+        <View style={chatScreen.Container}>
+          <View style={{alignItems: 'flex-start'}}>
+            <View style={chatScreen.chatScreenReceiver}>
+              <Text style={chatScreen.chatScreenText}>
+                {userDatas.messages}
+              </Text>
+            </View>
+          </View>
+
+          {messages.map((message, index) => (
+            <View key={index} style={{alignItems: 'flex-end'}}>
+              <View style={chatScreen.chatScreenSender}>
+                <Text style={chatScreen.chatScreenText}>{message.text}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
         <View
           style={{
             paddingVertical: 10,
@@ -80,14 +112,21 @@ const ChatScreen = props => {
               backgroundColor: '#5E5C5C',
               borderRadius: 30,
               justifyContent: 'space-between',
+              paddingRight: 20,
             }}>
             <TextInput
               placeholder="Enter text..."
               placeholderTextColor="white"
               style={chatScreen.textInput}
+              onChangeText={handleInput}
+              multiline // Enable multiline input
+              numberOfLines={1} // Set initial number of lines to 1
+              value={inputText} // Set the value to the state variable
             />
-            <TouchableOpacity style={{paddingHorizontal: 10}}>
-              <SendIcon name={'send'} size={25} color="#F3F3F3" />
+            <TouchableOpacity
+              style={{paddingHorizontal: 10}}
+              onPress={handleSend}>
+              <SendIcon name={'send'} size={30} color="#F3F3F3" />
             </TouchableOpacity>
           </View>
         </View>
