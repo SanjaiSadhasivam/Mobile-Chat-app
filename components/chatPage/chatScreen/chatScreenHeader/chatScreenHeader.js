@@ -26,10 +26,11 @@ const ChatScreenHeader = ({props, userDatas}) => {
         </View>
         <View style={{marginLeft: 1}}>
           <Text style={{color: '#fff', fontSize: 18}}>
-            {userDatas.userName}
+            {props.route.params.name}
           </Text>
           <Text style={{color: '#fff', fontSize: 13, marginTop: 12}}>
-            {userDatas.mobile}
+            {props.route.params.email}
+            {/* {userDatas.mobile} */}
           </Text>
         </View>
       </View>

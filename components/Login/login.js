@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   Image,
   Text,
@@ -13,8 +13,12 @@ import {
 import {loginStyles} from './login-css';
 import Icons from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {AuthContext} from '../../AuthContext';
+import {useNavigation} from '@react-navigation/native';
 
 const Login = props => {
+  const navigation = useNavigation();
   const [inputData, setInputData] = useState({
     mobileNumber: '',
     password: '',
@@ -23,6 +27,13 @@ const Login = props => {
   const handleInputChange = (name, value) => {
     setInputData(prev => ({...prev, [name]: value}));
   };
+  const {token, setToken} = useContext(AuthContext);
+
+  useEffect(() => {
+    if (token) {
+      navigation.replace('ChatBody', {screen: 'ChatBody'});
+    }
+  }, [token, navigation]);
 
   const onSubmit = async () => {
     const {mobileNumber, password} = inputData;
@@ -40,14 +51,14 @@ const Login = props => {
           formData,
         );
 
-        if (data.status == 'ok') {
+        if (data.status === 'ok') {
+          await AsyncStorage.setItem('authToken', data.token);
+          setToken(data.data._id);
           Alert.alert('Success', 'Login successful');
-          props.navigation.navigate('ChatBody');
-          // setInputData({
-          //   mobileNumber: '',
-          //   password: '',
-          // });
-        } else Alert.alert('Login failed', 'Insert a valid input');
+          // props.navigation.navigate('ChatBody');
+        } else {
+          Alert.alert('Login failed', 'Insert a valid input');
+        }
       } catch (error) {
         console.log(error);
       }

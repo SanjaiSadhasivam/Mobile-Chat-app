@@ -1,5 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   ScrollView,
   Text,
@@ -8,22 +9,29 @@ import {
   View,
 } from 'react-native';
 import ChatScreenHeader from './chatScreenHeader/chatScreenHeader';
-import {chatScreen} from './chatScreen-css';
+import {chatScreen} from './RequestScreen-css';
 import SendIcon from 'react-native-vector-icons/Ionicons';
+import {AuthContext} from '../../../AuthContext';
+import {useRoute} from '@react-navigation/native';
+import axios from 'axios';
+// import 'core-js/stable/atob';
 
 const ChatScreen = props => {
+  const {userId} = useContext(AuthContext);
+  const route = useRoute();
+
   const userData = [
     {
       userName: 'Sanjai',
-      id: 1,
+      id: '6668062ad99d906fe834f104',
       messages: 'hi how are you',
       unreadmsg: '4',
       image: require('../../../assets/images/user1.png'),
       mobile: '+91 98765432123',
     },
     {
-      userName: 'Jerin',
-      id: 2,
+      userName: 'dummy',
+      id: '6666a1949188f496e1abb968',
       messages: 'Whats up!!!',
       unreadmsg: '2',
       image: require('../../../assets/images/user4.png'),
@@ -48,18 +56,17 @@ const ChatScreen = props => {
   ];
 
   const [userDatas, setUserDatas] = useState({});
-  const GetDataById = id => {
-    const data = userData.find(i => i.id == id);
-    setUserDatas(data);
-  };
+  // const GetDataById = id => {
+  //   const data = userData.find(i => i.id == id);
+  //   setUserDatas(data);
+  // };
 
-  useEffect(() => {
-    if (props.route.params) {
-      GetDataById(props.route.params.id);
-    }
-  }, [props.route.params]);
+  //   if (props.route.params) {
+  //     GetDataById(props.route.params.receiverId);
+  //   }
+  // }, [props.route.params]);
 
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState('');
   const [inputText, setInputText] = useState('');
 
   const handleInput = text => {
@@ -76,26 +83,40 @@ const ChatScreen = props => {
     }
   };
 
+  const sentRequest = async () => {
+    try {
+      const userData = {
+        senderId: userId,
+        receiverId: props.route.params.receiverId,
+        message: messages,
+      };
+
+      const response = await axios.post(
+        'http://10.60.36.78:5000/auth/sentrequest',
+        userData,
+      );
+      // console.log(response, 'response');
+      if (response.status == 200) {
+        setMessages('');
+        Alert.alert('Your request send');
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
         <ChatScreenHeader props={props} userDatas={userDatas} />
         <View style={chatScreen.Container}>
           <View style={{alignItems: 'flex-start'}}>
-            <View style={chatScreen.chatScreenReceiver}>
+            {/* <View style={chatScreen.chatScreenReceiver}>
               <Text style={chatScreen.chatScreenText}>
                 {userDatas.messages}
               </Text>
-            </View>
+            </View> */}
           </View>
-
-          {messages.map((message, index) => (
-            <View key={index} style={{alignItems: 'flex-end'}}>
-              <View style={chatScreen.chatScreenSender}>
-                <Text style={chatScreen.chatScreenText}>{message.text}</Text>
-              </View>
-            </View>
-          ))}
         </View>
         <View
           style={{
@@ -118,14 +139,14 @@ const ChatScreen = props => {
               placeholder="Enter text..."
               placeholderTextColor="white"
               style={chatScreen.textInput}
-              onChangeText={handleInput}
+              onChangeText={setMessages}
               multiline // Enable multiline input
               numberOfLines={1} // Set initial number of lines to 1
-              value={inputText} // Set the value to the state variable
+              value={messages} // Set the value to the state variable
             />
             <TouchableOpacity
               style={{paddingHorizontal: 10}}
-              onPress={handleSend}>
+              onPress={sentRequest}>
               <SendIcon name={'send'} size={30} color="#F3F3F3" />
             </TouchableOpacity>
           </View>
