@@ -1,4 +1,4 @@
-package com.sample1
+package com.letschat
 
 import android.app.Application
 import com.facebook.react.PackageList

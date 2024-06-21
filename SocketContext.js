@@ -3,6 +3,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import {createContext} from 'react';
 import io from 'socket.io-client';
 import {AuthContext} from './AuthContext';
+import {BASE_URL} from './utils/API';
 
 const SocketContext = createContext();
 export const userSocketContext = () => {
@@ -13,10 +14,11 @@ const SocketContextProvider = ({children}) => {
   const [socket, setSocket] = useState();
   const {authUser, userId} = useContext(AuthContext);
 
-  const socketio = io('http://10.60.36.78:4000', {
+  const socketio = io(BASE_URL, {
     query: {
       userId: userId,
     },
+    path: '/mySocket',
   });
   useEffect(() => {
     if (userId) {

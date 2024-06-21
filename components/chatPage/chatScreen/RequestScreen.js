@@ -1,6 +1,8 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
   Alert,
+  Button,
+  Image,
   KeyboardAvoidingView,
   ScrollView,
   Text,
@@ -14,6 +16,13 @@ import SendIcon from 'react-native-vector-icons/Ionicons';
 import {AuthContext} from '../../../AuthContext';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
+import {loginStyles} from '../../Login/login-css';
+import {
+  ALERT_TYPE,
+  AlertNotificationRoot,
+  Dialog,
+} from 'react-native-alert-notification';
+import {BASE_URL} from '../../../utils/API';
 // import 'core-js/stable/atob';
 
 const ChatScreen = props => {
@@ -68,6 +77,7 @@ const ChatScreen = props => {
 
   const [messages, setMessages] = useState('');
   const [inputText, setInputText] = useState('');
+  const [connectButton, setconnectButton] = useState(false);
 
   const handleInput = text => {
     setInputText(text);
@@ -88,17 +98,50 @@ const ChatScreen = props => {
       const userData = {
         senderId: userId,
         receiverId: props.route.params.receiverId,
-        message: messages,
       };
 
       const response = await axios.post(
-        'http://10.60.36.78:5000/auth/sentrequest',
+        BASE_URL + '/auth/sentrequest',
         userData,
       );
-      // console.log(response, 'response');
+
       if (response.status == 200) {
-        setMessages('');
-        Alert.alert('Your request send');
+        // setMessages('');
+        // Alert.alert('Your request send');
+        setconnectButton(true);
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Your request send 🥰',
+          textBody: 'Wait for response',
+          button: 'Ok',
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteRequest = async () => {
+    try {
+      const userData = {
+        data: {
+          senderId: userId,
+          receiverId: props.route.params.receiverId,
+        },
+      };
+
+      const response = await axios.delete(
+        BASE_URL + '/auth/deleterequest',
+        userData,
+      );
+      if (response.status == 200) {
+        setconnectButton(false);
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Success',
+          textBody: 'Your request revoked 😥',
+          button: 'close',
+        });
       }
     } catch (error) {
       console.log(error);
@@ -109,48 +152,85 @@ const ChatScreen = props => {
     <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
         <ChatScreenHeader props={props} userDatas={userDatas} />
-        <View style={chatScreen.Container}>
-          <View style={{alignItems: 'flex-start'}}>
-            {/* <View style={chatScreen.chatScreenReceiver}>
-              <Text style={chatScreen.chatScreenText}>
-                {userDatas.messages}
-              </Text>
-            </View> */}
+        <AlertNotificationRoot>
+          <View style={chatScreen.Container}>
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                // width: '100%',
+                height: '100%',
+              }}>
+              <View
+                style={{
+                  borderRadius: 20,
+                  backgroundColor: '#4E4C4C',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 20,
+                  width: '100%',
+                }}>
+                <View style={{width: '100%', alignItems: 'center'}}>
+                  <Image
+                    source={require('../../../assets/images/requestPageLogo.png')}
+                    style={{width: 270, height: 160}}
+                  />
+                </View>
+
+                <View style={{paddingVertical: 10, paddingHorizontal: 20}}>
+                  {!connectButton ? (
+                    <TouchableOpacity
+                      style={{
+                        alignItems: 'center',
+                        backgroundColor: '#FFC901',
+                        // padding: 10,
+                        borderRadius: 10,
+                        paddingHorizontal: 30,
+                        paddingVertical: 5,
+                        marginTop: 20,
+                        justifyContent: 'center',
+                      }}
+                      // onPress={() => props.navigation.navigate('ChatBody')}>
+                      onPress={sentRequest}>
+                      <Text
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 600,
+                          fontFamily: 'Poppins-Bold',
+                        }}>
+                        Let's Connect
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={{
+                        alignItems: 'center',
+
+                        borderColor: '#FFC901',
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        paddingHorizontal: 30,
+                        paddingVertical: 5,
+                        marginTop: 20,
+                        justifyContent: 'center',
+                      }}
+                      onPress={deleteRequest}>
+                      <Text
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 600,
+                          fontFamily: 'Poppins-Bold',
+                          color: '#FFC901',
+                        }}>
+                        Delete Request
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
-        <View
-          style={{
-            paddingVertical: 10,
-            paddingHorizontal: 5,
-            backgroundColor: '#2C2929',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderColor: '#5E5C5C',
-              borderWidth: 2,
-              backgroundColor: '#5E5C5C',
-              borderRadius: 30,
-              justifyContent: 'space-between',
-              paddingRight: 20,
-            }}>
-            <TextInput
-              placeholder="Enter text..."
-              placeholderTextColor="white"
-              style={chatScreen.textInput}
-              onChangeText={setMessages}
-              multiline // Enable multiline input
-              numberOfLines={1} // Set initial number of lines to 1
-              value={messages} // Set the value to the state variable
-            />
-            <TouchableOpacity
-              style={{paddingHorizontal: 10}}
-              onPress={sentRequest}>
-              <SendIcon name={'send'} size={30} color="#F3F3F3" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        </AlertNotificationRoot>
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -3,11 +3,11 @@ import {StyleSheet} from 'react-native';
 export const chatScreen = StyleSheet.create({
   Container: {
     flex: 1,
-    // backgroundColor: '#2C2929',
-    paddingTop: 20,
-    paddingLeft: 15,
-    paddingRight: 15,
-    // width: '80%',
+
+    // paddingTop: 20,
+    // paddingLeft: 15,
+    // paddingRight: 15,
+    padding: 20,
   },
   textArea: {
     borderColor: '#FFC901',
@@ -36,13 +36,13 @@ export const chatScreen = StyleSheet.create({
   chatScreenReceiver: {
     marginTop: 15,
     height: 'auto',
-    // borderRadius: 20,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 20,
     backgroundColor: '#61511F',
   },
+
   chatScreenText: {
     color: '#fff',
     fontSize: 18,

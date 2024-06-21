@@ -1,4 +1,10 @@
-import React, {useEffect, useCallback, useState, useContext} from 'react';
+import React, {
+  useEffect,
+  useCallback,
+  useState,
+  useContext,
+  useRef,
+} from 'react';
 
 import {
   Image,
@@ -33,10 +39,16 @@ import {SceneMap, TabBar, TabView} from 'react-native-tab-view';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Cancel from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BASE_URL} from '../../../utils/API';
+import useSocketIO from '../../../utils/SocketIO';
+import {showNotification} from '../../../src/notification.android';
 
 const ChatBody = props => {
   const layout = useWindowDimensions();
   const route = useRoute();
+  const scrollViewRef = useRef(null);
+  const {socket, message, setMessage} = useSocketIO(userId, scrollViewRef);
+  const [existUserId, setExistUserId] = useState([]);
 
   const Chats = () => (
     <View>
@@ -57,12 +69,22 @@ const ChatBody = props => {
               return (
                 <View key={i}>
                   <TouchableOpacity
-                    onPress={() =>
+                    onPress={() => {
+                      const ids = [userId, item._id].sort().join('_');
+                      const roomID = `chatRoom_${ids}`;
                       props.navigation.navigate('ChatRoom', {
                         name: item.name,
                         receiverId: item._id,
-                      })
-                    }>
+                        email: item.email,
+                        roomID,
+                      });
+                    }}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        showNotification('LetsChat', 'new message')
+                      }>
+                      <Text style={{color: '#fff'}}>saddsdsd</Text>
+                    </TouchableOpacity>
                     <View
                       style={{
                         marginTop: 20,
@@ -94,7 +116,7 @@ const ChatBody = props => {
                               fontSize: 16,
                               fontFamily: 'Poppins-SemiBold',
                             }}>
-                            sasa
+                            {item?.recentMessage?.messages}
                           </Text>
                         </View>
                       </View>
@@ -159,10 +181,10 @@ const ChatBody = props => {
         </View>
 
         <View style={chatBody.usersStyle}>
-          {requests?.data?.length > 0 &&
-            requests?.data?.map((item, i) => {
-              return (
-                <View key={item._id}>
+          {requests?.data?.length > 0 ? (
+            <View key={item._id}>
+              {requests?.data?.map((item, i) => {
+                return (
                   <View
                     style={{
                       marginTop: 20,
@@ -208,7 +230,11 @@ const ChatBody = props => {
                     <View style={{flexDirection: 'row', alignItems: 'center'}}>
                       <TouchableOpacity
                         onPress={() => {
-                          acceptrequest(item?.from?._id);
+                          acceptrequest(
+                            item?.from?._id,
+                            item?.from?.name,
+                            item?.from?.email,
+                          );
                         }}>
                         <View
                           style={{
@@ -233,14 +259,46 @@ const ChatBody = props => {
                       </TouchableOpacity>
                     </View>
                   </View>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
+          ) : (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                // width: '100%',
+                height: '90%',
+                paddingHorizontal: 20,
+              }}>
+              <View
+                style={{
+                  borderRadius: 20,
+                  backgroundColor: '#4E4C4C',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 70,
+
+                  padding: 0,
+                  width: '100%',
+                  borderColor: '#FFC901',
+                  borderWidth: 1,
+                }}>
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontSize: 25,
+                  }}>
+                  No requests found!!☺️
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </View>
   );
-  const Peoples = ({navigateToSecondTab}) => (
+  const Peoples = () => (
     <View>
       <View style={{padding: 10}}>
         <View style={{padding: chatBody.Padding, flexDirection: 'row'}}>
@@ -297,45 +355,61 @@ const ChatBody = props => {
                             marginLeft: 10,
                           }}>
                           {item?.name}
+                          {/* {console.log(userId, 'lofggggg')} */}
                         </Text>
                       </View>
                     </View>
-
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                      {/* <TouchableOpacity
-                        onPress={() => {
-                          props.navigation.navigate('ChatScreen');
-                          item._id;
-                        }}>
-                        
-                      </TouchableOpacity> */}
-                      <TouchableOpacity
-                        // onPress={() =>
-                        //   Alert.alert(
-                        //     'Alert',
-                        //     'Request Approved successfully!!',
-                        //   )
-                        // }
-                        onPress={() => {
-                          // setIndex(1);
-                          props.navigation.navigate('ChatScreen', {
-                            receiverId: item._id,
-                            name: item?.name,
-                            email: item?.email,
-                          });
-                        }}>
-                        <View
-                          style={{
-                            marginLeft: 20,
-                            marginRight: 10,
-                            backgroundColor: '#61511F',
-                            borderRadius: 10,
-                            padding: 5,
+                    {existUserId.includes(item._id) ? (
+                      <View
+                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            // setIndex(1);
+                            props.navigation.navigate('ChatScreen', {
+                              receiverId: item._id,
+                              name: item?.name,
+                              email: item?.email,
+                            });
                           }}>
-                          <Entypo name={'plus'} size={25} color={'#FFC901'} />
-                        </View>
-                      </TouchableOpacity>
-                    </View>
+                          <View
+                            style={{
+                              marginLeft: 20,
+                              marginRight: 10,
+                              backgroundColor: '#61511F',
+                              borderRadius: 10,
+                              padding: 5,
+                            }}>
+                            <Entypo name={'plus'} size={25} color={'#FFC901'} />
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View
+                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            // setIndex(1);
+                            props.navigation.navigate('ChatRoom', {
+                              receiverId: item._id,
+                              name: item?.name,
+                              email: item?.email,
+                            });
+                          }}>
+                          <View
+                            style={{
+                              marginLeft: 20,
+                              marginRight: 10,
+                              backgroundColor: '#FFC901',
+                              borderRadius: 10,
+                              padding: 6,
+                            }}>
+                            <Text style={{fontSize: 18, color: '#000'}}>
+                              Chat
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 </View>
               );
@@ -443,11 +517,14 @@ const ChatBody = props => {
     }
   }, [userId]);
 
+  // useEffect(() => {
+  //   getUserData();
+  //   getAllUserData();
+  // }, []);
+
   const getAllUserData = async () => {
     try {
-      const {data} = await axios.get(
-        `http://10.60.36.78:5000/auth/users/${userId}`,
-      );
+      const {data} = await axios.get(BASE_URL + `/auth/users/${userId}`);
 
       setUserData(data.data);
     } catch (error) {
@@ -457,9 +534,7 @@ const ChatBody = props => {
   // console.log(userData, 'userData');
   const getUserData = async () => {
     try {
-      const response = await axios.get(
-        `http://10.60.36.78:5000/auth/user/${userId}`,
-      );
+      const response = await axios.get(BASE_URL + `/auth/user/${userId}`);
 
       setChats(response.data);
     } catch (error) {
@@ -491,9 +566,7 @@ const ChatBody = props => {
   }, [userId]);
   const getRequest = async () => {
     try {
-      const {data} = await axios.get(
-        `http://10.60.36.78:5000/auth/getrequests/${userId}`,
-      );
+      const {data} = await axios.get(BASE_URL + `/auth/getrequests/${userId}`);
 
       setrequests(data);
     } catch (error) {
@@ -501,23 +574,37 @@ const ChatBody = props => {
     }
   };
 
-  const acceptrequest = async requestId => {
+  const acceptrequest = async (requestId, name, email) => {
     try {
-      const response = await axios.post(
-        'http://10.60.36.78:5000/auth/acceptrequest',
-        {
-          userId: userId,
-          requestId: requestId,
-        },
-      );
+      const response = await axios.post(BASE_URL + '/auth/acceptrequest', {
+        userId: userId,
+        requestId: requestId,
+      });
       if (response.status == 200) {
-        props.navigation.navigate('ChatScreen');
+        // setIndex(1);
+        // props.navigation.navigate('ChatRoom', {
+        //   name: name,
+        //   email: email,
+        // });
         await getRequest();
       }
     } catch (error) {
       console.log(error);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (userData?.length > 0) {
+        const existUser = userData
+          ?.filter(user => !chats?.some(chat => chat._id == user._id))
+          .map(user => user._id);
+
+        setExistUserId(existUser);
+      }
+    }, [userData, chats]),
+    // console.log(existUserId, 'existUserIds'),
+  );
 
   return (
     <KeyboardAvoidingView style={{flex: 1}}>

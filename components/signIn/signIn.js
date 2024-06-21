@@ -14,6 +14,8 @@ import {loginStyles} from '../Login/login-css';
 import {signInStyles} from './signIn-css';
 import Icons from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
+import {ALERT_TYPE, Dialog} from 'react-native-alert-notification';
+import {BASE_URL} from '../../utils/API';
 
 // import {TextInput} from 'react-native-paper';
 
@@ -34,12 +36,25 @@ const SignIn = props => {
     const {name, mobileNumber, email, password, confirmPassword} = inputData;
 
     if (!name || !mobileNumber || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields');
+      // Alert.alert('Error', 'Please fill all fields');
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Please fill all fields',
+        button: 'close',
+      });
+
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      // Alert.alert('Error', 'Passwords do not match');
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: 'Warning',
+        textBody: 'Password do not match',
+        button: 'close',
+      });
       return;
     }
     try {
@@ -50,16 +65,26 @@ const SignIn = props => {
         password,
         // confirmPassword,
       };
-      const response = await axios.post(
-        'http://10.60.36.78:5000/auth/signup',
-        formData,
-      );
+      const response = await axios.post(BASE_URL + '/auth/signup', formData);
 
       if (response.status === 200) {
-        Alert.alert('Success', 'Sign up successful');
+        // Alert.alert('Success', 'Sign up successful');
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Success',
+          textBody: 'Registered successful',
+          button: 'close',
+        });
+
         props.navigation.navigate('Login');
       } else {
-        Alert.alert('Error', 'Sign up failed');
+        // Alert.alert('Error', 'Sign up failed');
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'Error',
+          textBody: 'Sign up failed',
+          button: 'close',
+        });
       }
     } catch (error) {
       console.log(error);
@@ -114,6 +139,7 @@ const SignIn = props => {
                 paddingHorizontal: 20, // Optional: Add padding for better appearance
                 borderRadius: 30,
               }}
+              keyboardType="numeric"
               onChangeText={value => handleInputChange('mobileNumber', value)}
             />
           </View>

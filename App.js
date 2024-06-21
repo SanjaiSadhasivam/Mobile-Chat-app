@@ -12,6 +12,7 @@ import ChatScreenHeader from './components/chatPage/chatScreen/chatScreenHeader/
 import {AuthProvider} from './AuthContext';
 import SocketContextProvider from './SocketContext';
 import ChatRoom from './components/chatPage/chatScreen/chatRoom';
+import {AlertNotificationRoot} from 'react-native-alert-notification';
 
 export default function App() {
   const Stack = createStackNavigator();
@@ -20,52 +21,54 @@ export default function App() {
     <PaperProvider>
       <NavigationContainer>
         <AuthProvider>
-          <SocketContextProvider>
-            <Stack.Navigator
-              screenOptions={{
-                ...TransitionPresets.SlideFromRightIOS,
-                transitionSpec: {
-                  open: {
-                    animation: 'timing',
-                    config: {
-                      duration: 400,
+          <AlertNotificationRoot>
+            <SocketContextProvider>
+              <Stack.Navigator
+                screenOptions={{
+                  ...TransitionPresets.SlideFromRightIOS,
+                  transitionSpec: {
+                    open: {
+                      animation: 'timing',
+                      config: {
+                        duration: 400,
+                      },
+                    },
+                    close: {
+                      animation: 'timing',
+                      config: {
+                        duration: 400,
+                      },
                     },
                   },
-                  close: {
-                    animation: 'timing',
-                    config: {
-                      duration: 400,
-                    },
-                  },
-                },
-              }}>
-              <Stack.Screen
-                name="Login"
-                component={Login}
-                options={{headerShown: false}}
-              />
-              <Stack.Screen
-                name="SignIn"
-                component={SignIn}
-                options={{headerShown: false}}
-              />
-              <Stack.Screen
-                name="ChatBody"
-                component={ChatBody}
-                options={{headerShown: false}}
-              />
-              <Stack.Screen
-                name="ChatScreen"
-                component={ChatScreen}
-                options={{headerShown: false}}
-              />
-              <Stack.Screen
-                name="ChatRoom"
-                component={ChatRoom}
-                options={{headerShown: false}}
-              />
-            </Stack.Navigator>
-          </SocketContextProvider>
+                }}>
+                <Stack.Screen
+                  name="Login"
+                  component={Login}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="SignIn"
+                  component={SignIn}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="ChatBody"
+                  component={ChatBody}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="ChatScreen"
+                  component={ChatScreen}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="ChatRoom"
+                  component={ChatRoom}
+                  options={{headerShown: false}}
+                />
+              </Stack.Navigator>
+            </SocketContextProvider>
+          </AlertNotificationRoot>
         </AuthProvider>
       </NavigationContainer>
     </PaperProvider>
