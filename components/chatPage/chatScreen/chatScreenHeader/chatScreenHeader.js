@@ -1,10 +1,24 @@
-import React from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Image, Text, TouchableOpacity, View} from 'react-native';
 
 import {chatScreenHeader} from './chatScreenHeader-css';
 import BackIcon from 'react-native-vector-icons/Ionicons';
+import useSocketIO from '../../../../utils/SocketIO';
+import {useSocket} from '../../../../SocketContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {AuthContext} from '../../../../AuthContext';
 
-const ChatScreenHeader = ({props, userDatas}) => {
+const ChatScreenHeader = ({props}) => {
+  const {activeUsers, isActive} = useSocket();
+  const [sctive, setsctive] = useState(false);
+  const {userName} = useContext(AuthContext);
+  useEffect(() => {
+    if (activeUsers) {
+      setsctive(activeUsers?.includes(props.route.params.receiverId));
+    }
+  }, [activeUsers]);
+
+  //
   return (
     <View style={chatScreenHeader.headerContainer}>
       <View
@@ -29,7 +43,8 @@ const ChatScreenHeader = ({props, userDatas}) => {
             {props.route.params.name}
           </Text>
           <Text style={{color: '#fff', fontSize: 13, marginTop: 12}}>
-            {props.route.params.email}
+            {/* {props.route.params.email} */}
+            {sctive ? 'online' : 'offline'}
           </Text>
         </View>
       </View>

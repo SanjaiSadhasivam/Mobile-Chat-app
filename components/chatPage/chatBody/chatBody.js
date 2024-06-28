@@ -41,14 +41,56 @@ import Cancel from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BASE_URL} from '../../../utils/API';
 import useSocketIO from '../../../utils/SocketIO';
-import {showNotification} from '../../../src/notification.android';
+import {
+  eventEmitter,
+  showNotification,
+} from '../../../src/notification.android';
+import {useSocket} from '../../../SocketContext';
 
 const ChatBody = props => {
   const layout = useWindowDimensions();
   const route = useRoute();
   const scrollViewRef = useRef(null);
-  const {socket, message, setMessage} = useSocketIO(userId, scrollViewRef);
+  const {message, setMessage} = useSocketIO(userId, scrollViewRef);
+  const {socket, SocketRemoveActiveUser, SocketIsActiveUser} = useSocket();
+  const [newMessage, setNewMessage] = useState('');
   const [existUserId, setExistUserId] = useState([]);
+  const [unReadMsg, setUnReadMsg] = useState('');
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = newMessages => {
+      setNewMessage(newMessages);
+    };
+
+    const handleUnreadMessageCount = ({to, count}) => {
+      setUnReadMsg(prev => ({...prev, [to]: count}));
+    };
+
+    socket.on('notification', handleNotification);
+    socket.on('unreadMessageCount', handleUnreadMessageCount);
+
+    return () => {
+      socket.off('notification', handleNotification);
+      socket.off('unreadMessageCount', handleUnreadMessageCount);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    const subscription = eventEmitter.addListener('notificationPressed', () => {
+      props.navigation.navigate('ChatBody');
+    });
+    // return () => {
+    //   subscription.remove(); // Clean up listener on component unmount
+    // };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      SocketIsActiveUser(userId);
+    }, []),
+  );
 
   const Chats = () => (
     <View>
@@ -66,10 +108,15 @@ const ChatBody = props => {
         {chats.length > 0 ? (
           <View>
             {chats.map((item, i) => {
+              const unreadCount = unReadMsg[item?.recentMessage?.receiverId];
               return (
                 <View key={i}>
                   <TouchableOpacity
                     onPress={() => {
+                      socket.emit(
+                        'markMessagesAsRead',
+                        item?.recentMessage?.receiverId,
+                      );
                       const ids = [userId, item._id].sort().join('_');
                       const roomID = `chatRoom_${ids}`;
                       props.navigation.navigate('ChatRoom', {
@@ -78,13 +125,9 @@ const ChatBody = props => {
                         email: item.email,
                         roomID,
                       });
-                    }}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        showNotification('LetsChat', 'new message')
-                      }>
-                      <Text style={{color: '#fff'}}>saddsdsd</Text>
-                    </TouchableOpacity>
+                    }}
+                    // onPress={() => navigateToChatRoom(item)}
+                  >
                     <View
                       style={{
                         marginTop: 20,
@@ -103,11 +146,13 @@ const ChatBody = props => {
                             }}>
                             {item.name}
                           </Text>
-                          <Badge
-                            label="1"
-                            style={{alignSelf: 'flex-start', top: 5}}
-                            color="#FFC901"
-                          />
+                          {unreadCount > 0 && (
+                            <Badge
+                              label={unreadCount}
+                              style={{alignSelf: 'flex-start', top: 5}}
+                              color="#FFC901"
+                            />
+                          )}
                         </View>
                         <View>
                           <Text
@@ -418,10 +463,7 @@ const ChatBody = props => {
       </View>
     </View>
   );
-  // const navigateToSecondTab = () => {
-  //   Alert.alert('Alert', 'Request Approved successfully!!');
-  //   setIndex(1); // Change the index to 1 to navigate to the second tab
-  // };
+
   const renderScene = SceneMap({
     first: Chats,
     second: Requests,
@@ -517,10 +559,13 @@ const ChatBody = props => {
     }
   }, [userId]);
 
-  // useEffect(() => {
-  //   getUserData();
-  //   getAllUserData();
-  // }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (newMessage) {
+        getUserData();
+      }
+    }, [newMessage]),
+  );
 
   const getAllUserData = async () => {
     try {
@@ -630,10 +675,11 @@ const ChatBody = props => {
                     <TouchableOpacity
                       onPress={() => {
                         Logout();
+                        SocketRemoveActiveUser(userId);
                         AsyncStorage.removeItem('authToken');
                       }}
                       style={{padding: 4}}>
-                      <Text>Logout</Text>
+                      <Text style={{color: '#000'}}>Logout</Text>
                     </TouchableOpacity>
                   </MenuOptions>
                 </Menu>

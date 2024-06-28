@@ -3,7 +3,8 @@ import {StyleSheet} from 'react-native';
 export const chatScreen = StyleSheet.create({
   Container: {
     flex: 1,
-
+    flexGrow: 1,
+    justifyContent: 'flex-end',
     // paddingTop: 20,
     // paddingLeft: 15,
     // paddingRight: 15,
@@ -32,6 +33,7 @@ export const chatScreen = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 0,
     backgroundColor: '#61511F',
+    marginLeft: '20%',
   },
   chatScreenReceiver: {
     marginTop: 15,
@@ -41,6 +43,7 @@ export const chatScreen = StyleSheet.create({
     borderTopLeftRadius: 0,
     borderTopRightRadius: 20,
     backgroundColor: '#61511F',
+    marginRight: '20%',
   },
 
   chatScreenText: {

@@ -9,20 +9,23 @@ import SignIn from './components/signIn/signIn';
 import ChatBody from './components/chatPage/chatBody/chatBody';
 import ChatScreen from './components/chatPage/chatScreen/RequestScreen';
 import ChatScreenHeader from './components/chatPage/chatScreen/chatScreenHeader/chatScreenHeader';
-import {AuthProvider} from './AuthContext';
-import SocketContextProvider from './SocketContext';
+import {AuthContext, AuthProvider} from './AuthContext';
+import {SocketProvider} from './SocketContext';
 import ChatRoom from './components/chatPage/chatScreen/chatRoom';
 import {AlertNotificationRoot} from 'react-native-alert-notification';
+import {useContext} from 'react';
 
 export default function App() {
   const Stack = createStackNavigator();
+
+  // const {userId} = useContext(AuthContext);
 
   return (
     <PaperProvider>
       <NavigationContainer>
         <AuthProvider>
           <AlertNotificationRoot>
-            <SocketContextProvider>
+            <SocketProvider>
               <Stack.Navigator
                 screenOptions={{
                   ...TransitionPresets.SlideFromRightIOS,
@@ -67,7 +70,7 @@ export default function App() {
                   options={{headerShown: false}}
                 />
               </Stack.Navigator>
-            </SocketContextProvider>
+            </SocketProvider>
           </AlertNotificationRoot>
         </AuthProvider>
       </NavigationContainer>

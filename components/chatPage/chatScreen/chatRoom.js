@@ -22,12 +22,11 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import {AuthContext} from '../../../AuthContext';
-import io from 'socket.io-client';
+import {io} from 'socket.io-client';
 import axios from 'axios';
-import {userSocketContext} from '../../../SocketContext';
+import {useSocket, userSocketContext} from '../../../SocketContext';
 import {BASE_URL} from '../../../utils/API';
 import useSocketIO from '../../../utils/SocketIO';
-import {showNotification} from '../../../src/notification.android';
 
 const ChatRoom = props => {
   const {roomID} = props.route.params;
@@ -44,22 +43,24 @@ const ChatRoom = props => {
 
   const sendMessage = async (senderId, receiverId) => {
     try {
-      await axios.post(BASE_URL + '/auth/sendMessage', {
-        senderId,
-        receiverId,
-        messages,
-      });
-      socket.emit('sendMessage', {
-        senderId,
-        receiverId,
-        messages,
-        roomid: roomID,
-      });
-      setMessages('');
+      if (messages.trim() !== '') {
+        await axios.post(BASE_URL + '/auth/sendMessage', {
+          senderId,
+          receiverId,
+          messages,
+        });
+        socket.emit('sendMessage', {
+          senderId,
+          receiverId,
+          messages,
+          roomid: roomID,
+        });
+        setMessages('');
 
-      setTimeout(() => {
-        fetchMessages();
-      }, 100);
+        setTimeout(() => {
+          fetchMessages();
+        }, 100);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -73,15 +74,7 @@ const ChatRoom = props => {
         params: {senderId, receiverId},
       });
       setMessage(response.data);
-      const lastMessage =
-        response.data.length > 0
-          ? response.data[response.data.length - 1]
-          : 'No messages';
-      const messagerId = response.data.map(item => item.senderId._id);
-      console.log(messagerId, 'response.data');
-      // if (messagerId.includes(userId)) {
-      //   showNotification('LetsChat', lastMessage.messages);
-      // }
+
       scrollViewRef.current?.scrollToEnd({animated: true});
     } catch (error) {
       console.log(error);
@@ -103,31 +96,66 @@ const ChatRoom = props => {
           }
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: 'flex-end',
+            // justifyContent: 'flex-end',
           }}>
-          <View style={chatScreen.Container}>
-            {message?.map((item, index) => {
-              const isSender = item?.senderId?._id == userId;
+          <View>
+            {message.length > 0 ? (
+              <View style={chatScreen.Container}>
+                {message?.map((item, index) => {
+                  const isSender = item?.senderId?._id == userId;
 
-              return (
+                  return (
+                    <View
+                      style={{
+                        alignItems: !isSender ? 'flex-start' : 'flex-end',
+                      }}
+                      key={index}>
+                      <View
+                        style={
+                          isSender
+                            ? chatScreen.chatScreenSender
+                            : chatScreen.chatScreenReceiver
+                        }>
+                        <Text style={chatScreen.chatScreenText}>
+                          {item.messages}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  // width: '100%',
+                  height: '90%',
+                  paddingHorizontal: 20,
+                }}>
                 <View
                   style={{
-                    alignItems: !isSender ? 'flex-start' : 'flex-end',
-                  }}
-                  key={index}>
-                  <View
-                    style={
-                      isSender
-                        ? chatScreen.chatScreenSender
-                        : chatScreen.chatScreenReceiver
-                    }>
-                    <Text style={chatScreen.chatScreenText}>
-                      {item.messages}
-                    </Text>
-                  </View>
+                    borderRadius: 20,
+                    backgroundColor: '#4E4C4C',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingVertical: 70,
+
+                    padding: 0,
+                    width: '100%',
+                    borderColor: '#FFC901',
+                    borderWidth: 1,
+                  }}>
+                  <Text
+                    style={{
+                      color: '#fff',
+                      fontSize: 25,
+                    }}>
+                    No messages found!!☺️
+                  </Text>
                 </View>
-              );
-            })}
+              </View>
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

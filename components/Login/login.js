@@ -23,9 +23,15 @@ import {
   Toast,
 } from 'react-native-alert-notification';
 import {BASE_URL} from '../../utils/API';
+import {checkApplicationPermission} from '../../utils/permission';
+import {io} from 'socket.io-client';
+import {useSocket} from '../../SocketContext';
 
 const Login = props => {
+  const {SocketIsActiveUser} = useSocket();
+
   const navigation = useNavigation();
+
   const [inputData, setInputData] = useState({
     mobileNumber: '',
     password: '',
@@ -63,6 +69,18 @@ const Login = props => {
         const {data} = await axios.post(BASE_URL + '/auth/login', formData);
 
         if (data.status === 'ok') {
+          checkApplicationPermission();
+          SocketIsActiveUser(data.data._id);
+
+          // const socketio = io(BASE_URL, {
+          //   query: {
+          //     userId: data.data._id,
+          //   },
+          //   path: '/mySocket',
+          // });
+
+          // socketio.emit('me', data.data._id);
+
           await AsyncStorage.setItem('authToken', data.token);
           setToken(data.data._id);
           Alert.alert('Success', 'Login successful');

@@ -1,7 +1,8 @@
 // NotificationService.js
-import {Platform} from 'react-native';
+import {EventEmitter} from 'events';
+import {Platform, PermissionsAndroid} from 'react-native';
 import PushNotification, {Importance} from 'react-native-push-notification';
-
+export const eventEmitter = new EventEmitter();
 // Function to create a notification channel
 const createNotificationChannel = () => {
   if (Platform.OS === 'android') {
@@ -30,11 +31,17 @@ PushNotification.configure({
     console.log('TOKEN:', token);
   },
 
-  // (required) Called when a remote is received or opened, or local notification is opened
   onNotification: function (notification) {
-    console.log('NOTIFICATION:', notification);
-    notification.finish(PushNotification.FetchResult.NoData);
+    if (notification.userInteraction) {
+      eventEmitter.emit('notificationPressed');
+    } else {
+      notification.finish(PushNotification.FetchResult.NoData);
+    }
   },
+  // onNotification: function (notification) {
+  //   console.log('NOTIFICATION:', notification);
+  //   notification.finish(PushNotification.FetchResult.NoData);
+  // },
 
   permissions: {
     alert: true,
@@ -49,7 +56,7 @@ PushNotification.configure({
 
 // Function to show a local notification
 export const showNotification = (title, message) => {
-  // console.log('logged:', title, message);
+  console.log('logged:', title, message);
   PushNotification.localNotification({
     channelId: 'default-channel-ids',
     title: title,
