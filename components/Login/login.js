@@ -41,10 +41,14 @@ const Login = props => {
     setInputData(prev => ({...prev, [name]: value}));
   };
   const {token, setToken} = useContext(AuthContext);
+  const [receiverId, setreceiverId] = useState('');
 
   useEffect(() => {
     if (token) {
-      navigation.replace('ChatBody', {screen: 'ChatBody'});
+      navigation.replace('ChatBody', {
+        screen: 'ChatBody',
+        params: {someData: receiverId},
+      });
     }
   }, [token, navigation]);
 
@@ -71,7 +75,7 @@ const Login = props => {
         if (data.status === 'ok') {
           checkApplicationPermission();
           SocketIsActiveUser(data.data._id);
-
+          setreceiverId(data.data._id);
           // const socketio = io(BASE_URL, {
           //   query: {
           //     userId: data.data._id,
@@ -97,7 +101,7 @@ const Login = props => {
           Dialog.show({
             type: ALERT_TYPE.DANGER,
             title: 'Login failed',
-            textBody: 'Insert a valid input',
+            textBody: data.message,
             button: 'close',
           });
         }

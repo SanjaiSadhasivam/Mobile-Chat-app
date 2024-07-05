@@ -23,48 +23,13 @@ import {
   Dialog,
 } from 'react-native-alert-notification';
 import {BASE_URL} from '../../../utils/API';
-// import 'core-js/stable/atob';
+import useSocketIO from '../../../utils/SocketIO';
 
 const ChatScreen = props => {
   const {userId} = useContext(AuthContext);
+  const {socket, message, setMessage} = useSocketIO();
   const route = useRoute();
 
-  const userData = [
-    {
-      userName: 'Sanjai',
-      id: '6668062ad99d906fe834f104',
-      messages: 'hi how are you',
-      unreadmsg: '4',
-      image: require('../../../assets/images/user1.png'),
-      mobile: '+91 98765432123',
-    },
-    {
-      userName: 'dummy',
-      id: '6666a1949188f496e1abb968',
-      messages: 'Whats up!!!',
-      unreadmsg: '2',
-      image: require('../../../assets/images/user4.png'),
-      mobile: '+91 8765456789',
-    },
-    {
-      userName: 'Jeni',
-      id: 3,
-      messages: 'Miss you jerin',
-      unreadmsg: '16',
-      image: require('../../../assets/images/user3.png'),
-      mobile: '+91 8765242311',
-    },
-    {
-      userName: 'Suji',
-      id: 4,
-      messages: 'I love you jerin mama',
-      unreadmsg: '1',
-      image: require('../../../assets/images/user2.png'),
-      mobile: '+91 787443425133',
-    },
-  ];
-
-  const [userDatas, setUserDatas] = useState({});
   // const GetDataById = id => {
   //   const data = userData.find(i => i.id == id);
   //   setUserDatas(data);
@@ -75,23 +40,7 @@ const ChatScreen = props => {
   //   }
   // }, [props.route.params]);
 
-  const [messages, setMessages] = useState('');
-  const [inputText, setInputText] = useState('');
   const [connectButton, setconnectButton] = useState(false);
-
-  const handleInput = text => {
-    setInputText(text);
-  };
-
-  const handleSend = () => {
-    if (inputText.trim()) {
-      setMessages([
-        ...messages,
-        {id: messages.length.toString(), text: inputText},
-      ]);
-      setInputText('');
-    }
-  };
 
   const sentRequest = async () => {
     try {
@@ -104,6 +53,9 @@ const ChatScreen = props => {
         BASE_URL + '/auth/sentrequest',
         userData,
       );
+      socket.emit('sentrequest', {
+        userData,
+      });
 
       if (response.status == 200) {
         // setMessages('');
@@ -134,6 +86,11 @@ const ChatScreen = props => {
         BASE_URL + '/auth/deleterequest',
         userData,
       );
+
+      socket.emit('deleteRequest', {
+        userData,
+      });
+
       if (response.status == 200) {
         setconnectButton(false);
         Dialog.show({
@@ -151,7 +108,7 @@ const ChatScreen = props => {
   return (
     <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
-        <ChatScreenHeader props={props} userDatas={userDatas} />
+        <ChatScreenHeader props={props} />
         <AlertNotificationRoot>
           <View style={chatScreen.Container}>
             <View

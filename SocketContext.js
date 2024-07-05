@@ -23,6 +23,8 @@ export const SocketProvider = ({children}) => {
     });
     setSocket(connection);
     connection.on('activeUsers', data => {
+      // setactiveUsers(data);
+      console.log(data, 'fromsocket');
       setisActive(!isActive);
 
       if (activeUsers.length == 0) {
@@ -36,9 +38,12 @@ export const SocketProvider = ({children}) => {
     };
   }, []);
   const SocketIsActiveUser = data => {
+    console.log(data, 'activeruser called');
     socket.emit('me', data);
+    socket.emit('activeUsers', data);
   };
   const SocketRemoveActiveUser = data => {
+    console.log(data, 'remove called');
     socket.emit('removeUser', data);
   };
   // socket?.on('connect_error', async (err) => {

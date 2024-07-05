@@ -46,16 +46,35 @@ import {
   showNotification,
 } from '../../../src/notification.android';
 import {useSocket} from '../../../SocketContext';
+import {Avatar} from 'react-native-elements';
+import FastImage from 'react-native-fast-image';
+import {
+  ALERT_TYPE,
+  AlertNotificationRoot,
+  Dialog,
+} from 'react-native-alert-notification';
+
+const CustomBadge = ({label, color, style}) => {
+  return (
+    <View style={[styles.badgeContainer, style, {backgroundColor: color}]}>
+      {label && <Text style={styles.badgeText}>{label}</Text>}
+    </View>
+  );
+};
 
 const ChatBody = props => {
   const layout = useWindowDimensions();
   const route = useRoute();
   const scrollViewRef = useRef(null);
   const {message, setMessage} = useSocketIO(userId, scrollViewRef);
-  const {socket, SocketRemoveActiveUser, SocketIsActiveUser} = useSocket();
+  const {socket, SocketRemoveActiveUser, SocketIsActiveUser, activeUsers} =
+    useSocket();
   const [newMessage, setNewMessage] = useState('');
   const [existUserId, setExistUserId] = useState([]);
   const [unReadMsg, setUnReadMsg] = useState('');
+  const [newRequest, setnewRequest] = useState(false);
+
+  // console.log(activeUsers, 'activeUsers');
 
   useEffect(() => {
     if (!socket) return;
@@ -71,6 +90,11 @@ const ChatBody = props => {
     socket.on('notification', handleNotification);
     socket.on('unreadMessageCount', handleUnreadMessageCount);
 
+    socket.on('getRequest', data => {
+      console.log('loggedszzzzzd');
+      setnewRequest(!newRequest);
+    });
+
     return () => {
       socket.off('notification', handleNotification);
       socket.off('unreadMessageCount', handleUnreadMessageCount);
@@ -85,12 +109,6 @@ const ChatBody = props => {
     //   subscription.remove(); // Clean up listener on component unmount
     // };
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      SocketIsActiveUser(userId);
-    }, []),
-  );
 
   const Chats = () => (
     <View>
@@ -109,6 +127,7 @@ const ChatBody = props => {
           <View>
             {chats.map((item, i) => {
               const unreadCount = unReadMsg[item?.recentMessage?.receiverId];
+              // const isActive = activeStatuses[i];
               return (
                 <View key={i}>
                   <TouchableOpacity
@@ -156,17 +175,19 @@ const ChatBody = props => {
                         </View>
                         <View>
                           <Text
+                            numberOfLines={1}
                             style={{
                               color: '#fff',
                               fontSize: 16,
                               fontFamily: 'Poppins-SemiBold',
+                              width: 200,
                             }}>
                             {item?.recentMessage?.messages}
                           </Text>
                         </View>
                       </View>
 
-                      <View
+                      {/* <View
                         style={{
                           borderColor: '#FFC901',
                           borderWidth: 2,
@@ -180,6 +201,40 @@ const ChatBody = props => {
                           source={require('../../../assets/images/user1.png')}
                           style={{width: 50, height: 50}}
                         />
+                      </View> */}
+
+                      <View
+                        style={{
+                          // borderColor: '#FFC901',
+                          // borderWidth: 2,
+                          // borderRadius: 100, // Half of the width/height for a perfect circle
+                          // overflow: 'hidden', // Ensure the image stays within the border
+                          // // marginRight: 15,
+                          height: 50,
+                          width: 50,
+                        }}>
+                        <Avatar
+                          rounded
+                          source={require('../../../assets/images/user1.png')}
+                          size="small"
+                          containerStyle={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 50,
+                          }}
+                        />
+                        {/* <View
+                          style={{
+                            // alignSelf: 'flex-start',
+                            // width: 10,
+                            // height: 10,
+                            borderRadius: 50,
+                            position: 'absolute',
+                            bottom: -10,
+                            right: 4,
+                          }}>
+                          <CustomBadge color={isActive ? '#47A850' : 'red'} />
+                        </View> */}
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -188,7 +243,37 @@ const ChatBody = props => {
             })}
           </View>
         ) : (
-          <Text style={{color: '#fff'}}>No chats Available</Text>
+          <View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              // width: '100%',
+              height: '85%',
+              // paddingHorizontal: 20,
+            }}>
+            <View
+              style={{
+                borderRadius: 20,
+                // backgroundColor: '#4E4C4C',
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingVertical: 50,
+
+                // padding: 0,
+                width: '100%',
+                // borderColor: '#FFC901',
+                // borderWidth: 1,
+              }}>
+              <FastImage
+                style={{width: 200, height: 200}}
+                source={require('../../../assets/images/nochats.gif')}
+                resizeMode={FastImage.resizeMode.contain}
+              />
+              <Text style={{color: '#fff', fontSize: 22}}>
+                No chats Found!!!
+              </Text>
+            </View>
+          </View>
         )}
       </View>
     </View>
@@ -227,10 +312,11 @@ const ChatBody = props => {
 
         <View style={chatBody.usersStyle}>
           {requests?.data?.length > 0 ? (
-            <View key={item._id}>
+            <View>
               {requests?.data?.map((item, i) => {
                 return (
                   <View
+                    key={item._id}
                     style={{
                       marginTop: 20,
                       flexDirection: 'row',
@@ -295,11 +381,18 @@ const ChatBody = props => {
                         </View>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert('Alert', 'Request removed successfully!!')
-                        }>
+                        onPress={() => deleteRequest(item.from)}
+                        // onPress={() =>
+                        //   Alert.alert('Alert', 'Request removed successfully!!')
+                        // }
+                      >
                         <View style={{marginLeft: 20, marginRight: 10}}>
-                          <Cancel name={'cancel'} size={30} color={'#888'} />
+                          <Cancel
+                            name={'cancel'}
+                            size={30}
+                            color={'#888'}
+                            // onPress={() => deleteRequest()}
+                          />
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -319,22 +412,23 @@ const ChatBody = props => {
               <View
                 style={{
                   borderRadius: 20,
-                  backgroundColor: '#4E4C4C',
+                  // backgroundColor: '#4E4C4C',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  paddingVertical: 70,
+                  paddingVertical: 50,
 
-                  padding: 0,
+                  // padding: 0,
                   width: '100%',
-                  borderColor: '#FFC901',
-                  borderWidth: 1,
+                  // borderColor: '#FFC901',
+                  // borderWidth: 1,
                 }}>
-                <Text
-                  style={{
-                    color: '#fff',
-                    fontSize: 25,
-                  }}>
-                  No requests found!!☺️
+                <FastImage
+                  style={{width: 250, height: 200}}
+                  source={require('../../../assets/images/nomsg.gif')}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
+                <Text style={{color: '#fff', fontSize: 22}}>
+                  No Requests Found!!!
                 </Text>
               </View>
             </View>
@@ -358,107 +452,152 @@ const ChatBody = props => {
         </View>
 
         <View style={chatBody.usersStyle}>
-          {userData.length > 0 &&
-            userData.map((item, i) => {
-              return (
-                <View key={item._id}>
-                  <View
-                    style={{
-                      marginTop: 20,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}>
+          {userData.length > 0 ? (
+            <View>
+              {userData.map((item, i) => {
+                return (
+                  <View key={item._id}>
                     <View
                       style={{
+                        marginTop: 20,
                         flexDirection: 'row',
-                        // justifyContent: 'space-between',
+                        justifyContent: 'space-between',
                         alignItems: 'center',
                       }}>
                       <View
                         style={{
-                          borderColor: '#FFC901',
-                          borderWidth: 2,
-                          borderRadius: 100, // Half of the width/height for a perfect circle
-                          overflow: 'hidden', // Ensure the image stays within the border
-                          // marginRight: 15,
-                          height: 50,
-                          width: 50,
+                          flexDirection: 'row',
+                          // justifyContent: 'space-between',
+                          alignItems: 'center',
                         }}>
-                        <Image
-                          source={require('../../../assets/images/user1.png')}
-                          style={{width: 50, height: 50}}
-                        />
-                      </View>
-
-                      <View style={{flexDirection: 'row'}}>
-                        <Text
+                        <View
                           style={{
-                            color: '#f3f3f3',
-                            fontFamily: 'Poppins-Bold',
-                            fontSize: 20,
-                            marginLeft: 10,
+                            borderColor: '#FFC901',
+                            borderWidth: 2,
+                            borderRadius: 100, // Half of the width/height for a perfect circle
+                            overflow: 'hidden', // Ensure the image stays within the border
+                            // marginRight: 15,
+                            height: 50,
+                            width: 50,
                           }}>
-                          {item?.name}
-                          {/* {console.log(userId, 'lofggggg')} */}
-                        </Text>
+                          <Image
+                            source={require('../../../assets/images/user1.png')}
+                            style={{width: 50, height: 50}}
+                          />
+                        </View>
+
+                        <View style={{flexDirection: 'row'}}>
+                          <Text
+                            style={{
+                              color: '#f3f3f3',
+                              fontFamily: 'Poppins-Bold',
+                              fontSize: 20,
+                              marginLeft: 10,
+                            }}>
+                            {item?.name}
+                          </Text>
+                        </View>
                       </View>
+                      {existUserId.includes(item._id) ? (
+                        <View
+                          style={{flexDirection: 'row', alignItems: 'center'}}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              // setIndex(1);
+                              props.navigation.navigate('ChatScreen', {
+                                receiverId: item._id,
+                                name: item?.name,
+                                email: item?.email,
+                              });
+                            }}>
+                            <View
+                              style={{
+                                marginLeft: 20,
+                                marginRight: 10,
+                                backgroundColor: '#61511F',
+                                borderRadius: 10,
+                                padding: 5,
+                              }}>
+                              <Entypo
+                                name={'plus'}
+                                size={25}
+                                color={'#FFC901'}
+                              />
+                            </View>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <View
+                          style={{flexDirection: 'row', alignItems: 'center'}}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              // setIndex(1);
+                              props.navigation.navigate('ChatRoom', {
+                                receiverId: item._id,
+                                name: item?.name,
+                                email: item?.email,
+                              });
+                            }}>
+                            <View
+                              style={{
+                                marginLeft: 20,
+                                marginRight: 10,
+                                backgroundColor: '#FFC901',
+                                borderRadius: 10,
+                                padding: 6,
+                              }}>
+                              <Text style={{fontSize: 18, color: '#000'}}>
+                                Chat
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
-                    {existUserId.includes(item._id) ? (
-                      <View
-                        style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <TouchableOpacity
-                          onPress={() => {
-                            // setIndex(1);
-                            props.navigation.navigate('ChatScreen', {
-                              receiverId: item._id,
-                              name: item?.name,
-                              email: item?.email,
-                            });
-                          }}>
-                          <View
-                            style={{
-                              marginLeft: 20,
-                              marginRight: 10,
-                              backgroundColor: '#61511F',
-                              borderRadius: 10,
-                              padding: 5,
-                            }}>
-                            <Entypo name={'plus'} size={25} color={'#FFC901'} />
-                          </View>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <View
-                        style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <TouchableOpacity
-                          onPress={() => {
-                            // setIndex(1);
-                            props.navigation.navigate('ChatRoom', {
-                              receiverId: item._id,
-                              name: item?.name,
-                              email: item?.email,
-                            });
-                          }}>
-                          <View
-                            style={{
-                              marginLeft: 20,
-                              marginRight: 10,
-                              backgroundColor: '#FFC901',
-                              borderRadius: 10,
-                              padding: 6,
-                            }}>
-                            <Text style={{fontSize: 18, color: '#000'}}>
-                              Chat
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      </View>
-                    )}
                   </View>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
+          ) : (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                // width: '100%',
+                height: '90%',
+                paddingHorizontal: 20,
+              }}>
+              <View
+                style={{
+                  borderRadius: 20,
+                  // backgroundColor: '#4E4C4C',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 50,
+
+                  // padding: 0,
+                  width: '100%',
+                  // borderColor: '#FFC901',
+                  // borderWidth: 1,
+                }}>
+                {/* <Text
+                style={{
+                  color: '#fff',
+                  fontSize: 25,
+                }}>
+                No requests found!!☺️
+              </Text> */}
+                <FastImage
+                  style={{width: 120, height: 170}}
+                  source={require('../../../assets/images/notfound.gif')}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
+                <Text style={{color: '#fff', fontSize: 22}}>
+                  No Peoples Found!!!
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -608,11 +747,56 @@ const ChatBody = props => {
     if (userId) {
       getRequest();
     }
-  }, [userId]);
+  }, [userId, newRequest]);
+
+  useEffect(() => {
+    socket.on('getRequest', data => {
+      console.log('loggedsss');
+      setnewRequest(!newRequest);
+    });
+    getRequest();
+  }, [newRequest]);
+
+  useEffect(() => {
+    getRequest();
+  }, []);
+
+  const deleteRequest = async sender => {
+    try {
+      const userData = {
+        data: {
+          senderId: sender._id,
+          receiverId: userId,
+        },
+      };
+
+      const response = await axios.delete(
+        BASE_URL + '/auth/deleterequest',
+        userData,
+      );
+
+      socket.emit('deleteSenderRequest', {
+        userData,
+      });
+      console.log(response, 'response');
+      if (response.status == 200) {
+        getRequest();
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Success',
+          textBody: 'Your request canceled 😥',
+          button: 'close',
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const getRequest = async () => {
     try {
       const {data} = await axios.get(BASE_URL + `/auth/getrequests/${userId}`);
-
+      // console.log(JSON.stringify(data, null, 2), 'dataid');
       setrequests(data);
     } catch (error) {
       console.log(error);
@@ -631,6 +815,7 @@ const ChatBody = props => {
         //   name: name,
         //   email: email,
         // });
+        getUserData();
         await getRequest();
       }
     } catch (error) {
@@ -655,46 +840,50 @@ const ChatBody = props => {
     <KeyboardAvoidingView style={{flex: 1}}>
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
         <MenuProvider style={chatBody.chatScreenlayout}>
-          <View style={chatBody.Container}>
-            <View style={{borderBottomWidth: 1, borderBottomColor: '#f3f3f3'}}>
-              <View style={chatBody.headerStyle}>
-                <Image
-                  source={require('../../../assets/images/chatHeader.png')}
-                  // style={{height: 60, width: 60}}
-                />
+          <AlertNotificationRoot>
+            <View style={chatBody.Container}>
+              <View
+                style={{borderBottomWidth: 1, borderBottomColor: '#f3f3f3'}}>
+                <View style={chatBody.headerStyle}>
+                  <Image
+                    source={require('../../../assets/images/chatHeader.png')}
+                    // style={{height: 60, width: 60}}
+                  />
 
-                <Menu>
-                  <MenuTrigger>
-                    <Entypo
-                      name="dots-three-vertical"
-                      color="#F3F3F3"
-                      size={23}
-                    />
-                  </MenuTrigger>
-                  <MenuOptions customStyles={{optionsContainer: {width: 100}}}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        Logout();
-                        SocketRemoveActiveUser(userId);
-                        AsyncStorage.removeItem('authToken');
-                      }}
-                      style={{padding: 4}}>
-                      <Text style={{color: '#000'}}>Logout</Text>
-                    </TouchableOpacity>
-                  </MenuOptions>
-                </Menu>
+                  <Menu>
+                    <MenuTrigger>
+                      <Entypo
+                        name="dots-three-vertical"
+                        color="#F3F3F3"
+                        size={23}
+                      />
+                    </MenuTrigger>
+                    <MenuOptions
+                      customStyles={{optionsContainer: {width: 100}}}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          Logout();
+                          SocketRemoveActiveUser(userId);
+                          AsyncStorage.removeItem('authToken');
+                        }}
+                        style={{padding: 4}}>
+                        <Text style={{color: '#000'}}>Logout</Text>
+                      </TouchableOpacity>
+                    </MenuOptions>
+                  </Menu>
+                </View>
               </View>
-            </View>
 
-            <TabView
-              navigationState={{index, routes}}
-              renderScene={renderScene}
-              onIndexChange={setIndex}
-              initialLayout={{width: layout.width}}
-              tabBarPosition="bottom"
-              renderTabBar={renderTabBar}
-            />
-          </View>
+              <TabView
+                navigationState={{index, routes}}
+                renderScene={renderScene}
+                onIndexChange={setIndex}
+                initialLayout={{width: layout.width}}
+                tabBarPosition="bottom"
+                renderTabBar={renderTabBar}
+              />
+            </View>
+          </AlertNotificationRoot>
         </MenuProvider>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -735,5 +924,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10, // Adjust the position as needed
     right: -10, // Adjust the position as needed
+  },
+  badgeContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    bottom: 10,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

@@ -61,5 +61,6 @@ export const showNotification = (title, message) => {
     channelId: 'default-channel-ids',
     title: title,
     message: message,
+    actions: ['Reply'],
   });
 };

@@ -5,6 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
+  Image,
+  StyleSheet,
 } from 'react-native';
 import React, {
   useCallback,
@@ -27,6 +30,8 @@ import axios from 'axios';
 import {useSocket, userSocketContext} from '../../../SocketContext';
 import {BASE_URL} from '../../../utils/API';
 import useSocketIO from '../../../utils/SocketIO';
+import FastImage from 'react-native-fast-image';
+import DeleteIcon from 'react-native-vector-icons/MaterialIcons'; // Import Delete icon
 
 const ChatRoom = props => {
   const {roomID} = props.route.params;
@@ -42,13 +47,14 @@ const ChatRoom = props => {
   );
 
   const sendMessage = async (senderId, receiverId) => {
+    setSending(true);
     try {
       if (messages.trim() !== '') {
-        await axios.post(BASE_URL + '/auth/sendMessage', {
-          senderId,
-          receiverId,
-          messages,
-        });
+        // await axios.post(BASE_URL + '/auth/sendMessage', {
+        //   senderId,
+        //   receiverId,
+        //   messages,
+        // });
         socket.emit('sendMessage', {
           senderId,
           receiverId,
@@ -63,10 +69,17 @@ const ChatRoom = props => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setSending(false);
     }
   };
 
-  const fetchMessages = async () => {
+  const [loading, setLoading] = useState(true); // Start with loading as true
+  const [sending, setSending] = useState(false); // New state for sending messages
+  const fetchMessages = async (initial = false) => {
+    if (initial) {
+      setLoading(true);
+    }
     try {
       const senderId = userId;
       const receiverId = props.route.params.receiverId;
@@ -74,16 +87,73 @@ const ChatRoom = props => {
         params: {senderId, receiverId},
       });
       setMessage(response.data);
-
+      if (initial) {
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000); // Delay for 2 seconds
+      } else {
+        setLoading(false);
+      }
       scrollViewRef.current?.scrollToEnd({animated: true});
     } catch (error) {
       console.log(error);
+      if (initial) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchMessages();
   }, []);
+  // useEffect(() => {
+  //   if (message) {
+  //     fetchMessages();
+  //   }
+  // }, [message]);
+
+  const formatTimestamp = timestamp => {
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+    return hours + ':' + formattedMinutes + ' ' + ampm;
+  };
+
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const handleLongPress = item => {
+    if (selectedMessages.includes(item)) {
+      setSelectedMessages(
+        selectedMessages.filter(selectedItem => selectedItem !== item),
+      );
+    } else {
+      setSelectedMessages([...selectedMessages, item]);
+    }
+  };
+
+  const deleteSelectedMessages = async () => {
+    const messageIds = selectedMessages.map(msg => msg._id);
+
+    try {
+      const messageDelete = await axios.delete(
+        `${BASE_URL}/auth/deleteMessages`,
+        {
+          data: {messageIds},
+        },
+      );
+
+      const newMessages = message.filter(
+        msg => !selectedMessages.includes(msg),
+      );
+      setMessage(newMessages);
+      setSelectedMessages([]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <View style={{flexGrow: 1}}>
@@ -99,28 +169,54 @@ const ChatRoom = props => {
             // justifyContent: 'flex-end',
           }}>
           <View>
-            {message.length > 0 ? (
+            {loading ? (
+              <View
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexGrow: 1,
+                  height: '100%',
+                }}>
+                <ActivityIndicator size="10px" color="#FFC901" />
+              </View>
+            ) : message.length > 0 ? (
               <View style={chatScreen.Container}>
                 {message?.map((item, index) => {
                   const isSender = item?.senderId?._id == userId;
-
+                  const isSelected = selectedMessages.includes(item);
                   return (
-                    <View
-                      style={{
-                        alignItems: !isSender ? 'flex-start' : 'flex-end',
-                      }}
-                      key={index}>
+                    <TouchableOpacity
+                      key={index}
+                      onLongPress={() => handleLongPress(item)}
+                      style={[styles.item, isSelected && styles.selectedItem]}>
                       <View
-                        style={
-                          isSender
-                            ? chatScreen.chatScreenSender
-                            : chatScreen.chatScreenReceiver
-                        }>
-                        <Text style={chatScreen.chatScreenText}>
-                          {item.messages}
-                        </Text>
+                        style={{
+                          alignItems: !isSender ? 'flex-start' : 'flex-end',
+                        }}
+                        key={index}>
+                        <View
+                          style={
+                            isSender
+                              ? chatScreen.chatScreenSender
+                              : chatScreen.chatScreenReceiver
+                          }>
+                          <Text style={chatScreen.chatScreenText}>
+                            {item.messages}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              paddingLeft: 15,
+                              paddingLeft: 15,
+                              paddingRight: 15,
+                              paddingBottom: 10,
+                              color: '#fff',
+                            }}>
+                            {formatTimestamp(item.timeStamp)}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })}
               </View>
@@ -136,22 +232,23 @@ const ChatRoom = props => {
                 <View
                   style={{
                     borderRadius: 20,
-                    backgroundColor: '#4E4C4C',
+                    // backgroundColor: '#4E4C4C',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    paddingVertical: 70,
+                    paddingVertical: 50,
 
-                    padding: 0,
+                    // padding: 0,
                     width: '100%',
-                    borderColor: '#FFC901',
-                    borderWidth: 1,
+                    // borderColor: '#FFC901',
+                    // borderWidth: 1,
                   }}>
-                  <Text
-                    style={{
-                      color: '#fff',
-                      fontSize: 25,
-                    }}>
-                    No messages found!!☺️
+                  <FastImage
+                    style={{width: 250, height: 200}}
+                    source={require('../../../assets/images/nomsg1.gif')}
+                    resizeMode={FastImage.resizeMode.contain}
+                  />
+                  <Text style={{color: '#fff', fontSize: 22}}>
+                    No Messages Found!!!
                   </Text>
                 </View>
               </View>
@@ -159,6 +256,15 @@ const ChatRoom = props => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {selectedMessages.length > 0 && (
+        <TouchableOpacity
+          style={styles.deleteIcon}
+          onPress={deleteSelectedMessages}>
+          <DeleteIcon name="delete" size={30} color="#F3F3F3" />
+        </TouchableOpacity>
+      )}
+
       <View
         style={{
           paddingVertical: 10,
@@ -195,5 +301,20 @@ const ChatRoom = props => {
     </View>
   );
 };
+const styles = StyleSheet.create({
+  deleteIcon: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    backgroundColor: '#FFC901',
+    padding: 10,
+    borderRadius: 50,
+  },
+
+  selectedItem: {
+    backgroundColor: '#61511F',
+    opacity: 0.3,
+  },
+});
 
 export default ChatRoom;
