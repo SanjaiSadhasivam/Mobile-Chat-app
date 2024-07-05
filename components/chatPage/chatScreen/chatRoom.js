@@ -32,6 +32,8 @@ import {BASE_URL} from '../../../utils/API';
 import useSocketIO from '../../../utils/SocketIO';
 import FastImage from 'react-native-fast-image';
 import DeleteIcon from 'react-native-vector-icons/MaterialIcons'; // Import Delete icon
+import {Button, Modal, Portal, Provider} from 'react-native-paper';
+import DeleteModel from '../../deleteModel/deleteModel';
 
 const ChatRoom = props => {
   const {roomID} = props.route.params;
@@ -80,6 +82,7 @@ const ChatRoom = props => {
     if (initial) {
       setLoading(true);
     }
+
     try {
       const senderId = userId;
       const receiverId = props.route.params.receiverId;
@@ -144,16 +147,25 @@ const ChatRoom = props => {
           data: {messageIds},
         },
       );
+      // console.log(messageDelete, 'called');
 
       const newMessages = message.filter(
         msg => !selectedMessages.includes(msg),
       );
       setMessage(newMessages);
+      // if (newMessages) {
+      fetchMessages(false);
+      // }
       setSelectedMessages([]);
     } catch (error) {
       console.log(error);
     }
   };
+
+  const [visible, setVisible] = useState(false);
+
+  const showModal = () => setVisible(true);
+  const hideModal = () => setVisible(false);
 
   return (
     <View style={{flexGrow: 1}}>
@@ -260,9 +272,18 @@ const ChatRoom = props => {
       {selectedMessages.length > 0 && (
         <TouchableOpacity
           style={styles.deleteIcon}
-          onPress={deleteSelectedMessages}>
+          // onPress={deleteSelectedMessages}
+          onPress={showModal}>
           <DeleteIcon name="delete" size={30} color="#F3F3F3" />
         </TouchableOpacity>
+      )}
+      {visible && (
+        <DeleteModel
+          showModal={showModal}
+          hideModal={hideModal}
+          visible={visible}
+          deleteSelectedMessages={deleteSelectedMessages}
+        />
       )}
 
       <View

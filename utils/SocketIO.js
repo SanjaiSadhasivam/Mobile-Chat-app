@@ -31,7 +31,6 @@ export default function useSocketIO(userId, scrollViewRef, roomid) {
       });
       // console.log('testtsss');
       socketio.on('notification', newMessages => {
-        console.log('newMessage');
         showNotification('LetsChat', newMessages);
       });
       // socketio.on('activeUsers', users => {

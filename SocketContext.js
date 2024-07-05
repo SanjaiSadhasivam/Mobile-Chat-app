@@ -24,7 +24,7 @@ export const SocketProvider = ({children}) => {
     setSocket(connection);
     connection.on('activeUsers', data => {
       // setactiveUsers(data);
-      console.log(data, 'fromsocket');
+      // console.log(data, 'fromsocket');
       setisActive(!isActive);
 
       if (activeUsers.length == 0) {
