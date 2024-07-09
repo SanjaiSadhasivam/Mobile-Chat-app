@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
   StyleSheet,
+  SectionList,
 } from 'react-native';
 import React, {
   useCallback,
@@ -34,6 +35,7 @@ import FastImage from 'react-native-fast-image';
 import DeleteIcon from 'react-native-vector-icons/MaterialIcons'; // Import Delete icon
 import {Button, Modal, Portal, Provider} from 'react-native-paper';
 import DeleteModel from '../../deleteModel/deleteModel';
+import {getTime, groupMessagesByDate} from '../../messageHelper/messageHelper';
 
 const ChatRoom = props => {
   const {roomID} = props.route.params;
@@ -97,7 +99,7 @@ const ChatRoom = props => {
       } else {
         setLoading(false);
       }
-      scrollViewRef.current?.scrollToEnd({animated: true});
+      // scrollViewRef.current?.scrollToEnd({animated: true});
     } catch (error) {
       console.log(error);
       if (initial) {
@@ -109,11 +111,6 @@ const ChatRoom = props => {
   useEffect(() => {
     fetchMessages();
   }, []);
-  // useEffect(() => {
-  //   if (message) {
-  //     fetchMessages();
-  //   }
-  // }, [message]);
 
   const formatTimestamp = timestamp => {
     const date = new Date(timestamp);
@@ -126,6 +123,12 @@ const ChatRoom = props => {
     return hours + ':' + formattedMinutes + ' ' + ampm;
   };
 
+  // useEffect(() => {
+  //   if (message) {
+  //     fetchMessages();
+  //   }
+  // }, [message]);
+
   const [selectedMessages, setSelectedMessages] = useState([]);
   const handleLongPress = item => {
     if (selectedMessages.includes(item)) {
@@ -137,6 +140,13 @@ const ChatRoom = props => {
     }
   };
 
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('messagesDeleted', data => {
+      fetchMessages();
+    });
+  }, [message]);
+
   const deleteSelectedMessages = async () => {
     const messageIds = selectedMessages.map(msg => msg._id);
 
@@ -147,15 +157,13 @@ const ChatRoom = props => {
           data: {messageIds},
         },
       );
-      // console.log(messageDelete, 'called');
-
+      socket.emit('deleteMessage', {messageIds, roomID});
       const newMessages = message.filter(
         msg => !selectedMessages.includes(msg),
       );
+      fetchMessages();
       setMessage(newMessages);
-      // if (newMessages) {
-      fetchMessages(false);
-      // }
+
       setSelectedMessages([]);
     } catch (error) {
       console.log(error);
@@ -167,11 +175,14 @@ const ChatRoom = props => {
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
 
+  const groupedMessages = groupMessagesByDate(message);
+  const [listViewHeight, setListViewHeight] = useState(undefined);
+
   return (
     <View style={{flexGrow: 1}}>
       <ChatScreenHeader props={props} chatName={props.route.params.name} />
       <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>
-        <ScrollView
+        {/* <ScrollView
           ref={scrollViewRef}
           onContentSizeChange={() =>
             scrollViewRef.current?.scrollToEnd({animated: true})
@@ -179,94 +190,168 @@ const ChatRoom = props => {
           contentContainerStyle={{
             flexGrow: 1,
             // justifyContent: 'flex-end',
-          }}>
-          <View>
-            {loading ? (
-              <View
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexGrow: 1,
-                  height: '100%',
-                }}>
-                <ActivityIndicator size="10px" color="#FFC901" />
-              </View>
-            ) : message.length > 0 ? (
-              <View style={chatScreen.Container}>
-                {message?.map((item, index) => {
-                  const isSender = item?.senderId?._id == userId;
-                  const isSelected = selectedMessages.includes(item);
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      onLongPress={() => handleLongPress(item)}
-                      style={[styles.item, isSelected && styles.selectedItem]}>
+          }}> */}
+        <View>
+          {loading ? (
+            <View
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexGrow: 1,
+                height: '100%',
+              }}>
+              <ActivityIndicator size="10px" color="#FFC901" />
+            </View>
+          ) : groupedMessages.length > 0 ? (
+            <SectionList
+              stickySectionHeadersEnabled
+              ref={scrollViewRef}
+              onLayout={event => {
+                setListViewHeight(event.nativeEvent.layout.height);
+              }}
+              onContentSizeChange={(w, h) => {
+                scrollViewRef?.current?.getScrollResponder()?.scrollTo({
+                  y: h - listViewHeight,
+                });
+              }}
+              contentContainerStyle={{
+                justifyContent: 'flex-end',
+                paddingBottom: 0,
+                flexGrow: 1,
+                padding: 10,
+              }}
+              scrollEnabled
+              sections={groupedMessages}
+              keyExtractor={(item, index) => index}
+              renderItem={({item}) => {
+                const isSender = item?.senderId?._id == userId;
+                const isSelected = selectedMessages.includes(item);
+                return (
+                  <TouchableOpacity
+                    onLongPress={() => handleLongPress(item)}
+                    style={[styles.item, isSelected && styles.selectedItem]}>
+                    <View
+                      style={{
+                        alignItems: !isSender ? 'flex-start' : 'flex-end',
+                      }}>
                       <View
-                        style={{
-                          alignItems: !isSender ? 'flex-start' : 'flex-end',
-                        }}
-                        key={index}>
-                        <View
-                          style={
-                            isSender
-                              ? chatScreen.chatScreenSender
-                              : chatScreen.chatScreenReceiver
-                          }>
-                          <Text style={chatScreen.chatScreenText}>
-                            {item.messages}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              paddingLeft: 15,
-                              paddingLeft: 15,
-                              paddingRight: 15,
-                              paddingBottom: 10,
-                              color: '#fff',
-                            }}>
-                            {formatTimestamp(item.timeStamp)}
-                          </Text>
-                        </View>
+                        style={
+                          isSender
+                            ? chatScreen.chatScreenSender
+                            : chatScreen.chatScreenReceiver
+                        }>
+                        <Text style={chatScreen.chatScreenText}>
+                          {item.messages}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            paddingLeft: 15,
+                            paddingRight: 15,
+                            paddingBottom: 10,
+                            color: '#fff',
+                          }}>
+                          {formatTimestamp(item.timeStamp)}
+                        </Text>
                       </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-              <View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  // width: '100%',
-                  height: '90%',
-                  paddingHorizontal: 20,
-                }}>
-                <View
-                  style={{
-                    borderRadius: 20,
-                    // backgroundColor: '#4E4C4C',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingVertical: 50,
-
-                    // padding: 0,
-                    width: '100%',
-                    // borderColor: '#FFC901',
-                    // borderWidth: 1,
-                  }}>
-                  <FastImage
-                    style={{width: 250, height: 200}}
-                    source={require('../../../assets/images/nomsg1.gif')}
-                    resizeMode={FastImage.resizeMode.contain}
-                  />
-                  <Text style={{color: '#fff', fontSize: 22}}>
-                    No Messages Found!!!
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+              renderSectionHeader={({section: {title}}) => (
+                <View style={{alignItems: 'center'}}>
+                  <Text style={[styles.dateHeader, styles.Header]}>
+                    {title}
                   </Text>
                 </View>
+              )}
+            />
+          ) : (
+            // <View style={chatScreen.Container}>
+            //   {groupedMessages.map((group, groupIndex) => (
+            //     <View key={groupIndex}>
+            //       <View style={{alignItems: 'center'}}>
+            //         <Text style={[styles.dateHeader, styles.Header]}>
+            //           {group.title}
+            //         </Text>
+            //       </View>
+            //       {group.data.map((item, index) => {
+            //         const isSender = item?.senderId?._id == userId;
+            //         const isSelected = selectedMessages.includes(item);
+            //         return (
+            //           <TouchableOpacity
+            //             key={index}
+            //             onLongPress={() => handleLongPress(item)}
+            //             style={[
+            //               styles.item,
+            //               isSelected && styles.selectedItem,
+            //             ]}>
+            //             <View
+            //               style={{
+            //                 alignItems: !isSender ? 'flex-start' : 'flex-end',
+            //               }}
+            //               key={index}>
+            //               <View
+            //                 style={
+            //                   isSender
+            //                     ? chatScreen.chatScreenSender
+            //                     : chatScreen.chatScreenReceiver
+            //                 }>
+            //                 <Text style={chatScreen.chatScreenText}>
+            //                   {item.messages}
+            //                 </Text>
+            //                 <Text
+            //                   style={{
+            //                     fontSize: 12,
+            //                     paddingLeft: 15,
+            //                     paddingRight: 15,
+            //                     paddingBottom: 10,
+            //                     color: '#fff',
+            //                   }}>
+            //                   {formatTimestamp(item.timeStamp)}
+            //                 </Text>
+            //               </View>
+            //             </View>
+            //           </TouchableOpacity>
+            //         );
+            //       })}
+            //     </View>
+            //   ))}
+            // </View>
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                // width: '100%',
+                height: '90%',
+                paddingHorizontal: 20,
+              }}>
+              <View
+                style={{
+                  borderRadius: 20,
+                  // backgroundColor: '#4E4C4C',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 50,
+
+                  // padding: 0,
+                  width: '100%',
+                  // borderColor: '#FFC901',
+                  // borderWidth: 1,
+                }}>
+                <FastImage
+                  style={{width: 250, height: 200}}
+                  source={require('../../../assets/images/nomsg1.gif')}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
+                <Text style={{color: '#fff', fontSize: 22}}>
+                  No Messages Found!!!
+                </Text>
               </View>
-            )}
-          </View>
-        </ScrollView>
+            </View>
+          )}
+        </View>
+        {/* </ScrollView> */}
       </KeyboardAvoidingView>
 
       {selectedMessages.length > 0 && (
@@ -323,6 +408,22 @@ const ChatRoom = props => {
   );
 };
 const styles = StyleSheet.create({
+  Header: {
+    color: '#f3f3f3',
+    opacity: 0.6,
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: '#61511F',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  selectedItem: {
+    backgroundColor: '#61511F',
+    opacity: 0.3,
+  },
+
   deleteIcon: {
     position: 'absolute',
     bottom: 80,
@@ -331,10 +432,27 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 50,
   },
-
-  selectedItem: {
-    backgroundColor: '#61511F',
-    opacity: 0.3,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    backgroundColor: '#333333',
+  },
+  textInput: {
+    flex: 1,
+    color: 'white',
+    fontSize: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#555555',
+    borderRadius: 30,
+  },
+  sendButton: {
+    marginLeft: 10,
+    backgroundColor: '#FFC901',
+    padding: 10,
+    borderRadius: 30,
   },
 });
 

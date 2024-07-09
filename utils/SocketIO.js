@@ -27,7 +27,7 @@ export default function useSocketIO(userId, scrollViewRef, roomid) {
         newMessage.shouldShake = true;
         setMessage(prevMessages => [...prevMessages, newMessage]);
         // showNotification('LetsChat', newMessage.messages);
-        scrollViewRef.current?.scrollToEnd({animated: true});
+        // scrollViewRef.current?.scrollToEnd({animated: true});
       });
       // console.log('testtsss');
       socketio.on('notification', newMessages => {

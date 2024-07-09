@@ -37,6 +37,8 @@ import axios from 'axios';
 import {AuthContext} from '../../../AuthContext';
 import {SceneMap, TabBar, TabView} from 'react-native-tab-view';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LogoutIcon from 'react-native-vector-icons/MaterialIcons';
+import ProfileIcon from 'react-native-vector-icons/FontAwesome';
 import Cancel from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BASE_URL} from '../../../utils/API';
@@ -44,6 +46,7 @@ import useSocketIO from '../../../utils/SocketIO';
 import {
   eventEmitter,
   showNotification,
+  showRequests,
 } from '../../../src/notification.android';
 import {useSocket} from '../../../SocketContext';
 import {Avatar} from 'react-native-elements';
@@ -91,7 +94,6 @@ const ChatBody = props => {
     socket.on('unreadMessageCount', handleUnreadMessageCount);
 
     socket.on('getRequest', data => {
-      console.log('loggedszzzzzd');
       setnewRequest(!newRequest);
     });
 
@@ -715,7 +717,7 @@ const ChatBody = props => {
       console.log(error);
     }
   };
-  // console.log(userData, 'userData');
+
   const getUserData = async () => {
     try {
       const response = await axios.get(BASE_URL + `/auth/user/${userId}`);
@@ -751,9 +753,12 @@ const ChatBody = props => {
 
   useEffect(() => {
     socket.on('getRequest', data => {
-      console.log('loggedsss');
+      console.log(data, 'datashagds');
       setnewRequest(!newRequest);
     });
+    if (newRequest) {
+      showRequests('LetsChat', 'New Request Found');
+    }
     getRequest();
   }, [newRequest]);
 
@@ -778,7 +783,7 @@ const ChatBody = props => {
       socket.emit('deleteSenderRequest', {
         userData,
       });
-      console.log(response, 'response');
+
       if (response.status == 200) {
         getRequest();
         Dialog.show({
@@ -859,7 +864,13 @@ const ChatBody = props => {
                       />
                     </MenuTrigger>
                     <MenuOptions
-                      customStyles={{optionsContainer: {width: 100}}}>
+                      customStyles={{
+                        optionsContainer: {
+                          width: 100,
+                          paddingLeft: 10,
+                          backgroundColor: '#aaa07c',
+                        },
+                      }}>
                       <TouchableOpacity
                         onPress={() => {
                           Logout();
@@ -867,7 +878,36 @@ const ChatBody = props => {
                           AsyncStorage.removeItem('authToken');
                         }}
                         style={{padding: 4}}>
-                        <Text style={{color: '#000'}}>Logout</Text>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            paddingRight: 10,
+                          }}>
+                          <LogoutIcon color="#000" size={14} name="logout" />
+                          <Text style={{color: '#000', fontWeight: 500}}>
+                            Logout
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={{padding: 4}}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            paddingRight: 10,
+                          }}>
+                          <ProfileIcon
+                            color="#000"
+                            size={14}
+                            name="user-circle"
+                          />
+                          <Text style={{color: '#000', fontWeight: 500}}>
+                            Profile
+                          </Text>
+                        </View>
                       </TouchableOpacity>
                     </MenuOptions>
                   </Menu>

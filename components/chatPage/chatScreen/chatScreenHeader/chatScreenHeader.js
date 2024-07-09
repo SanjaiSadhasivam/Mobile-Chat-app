@@ -1,8 +1,9 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {Image, Text, TouchableOpacity, View} from 'react-native';
+import {Alert, Image, Text, TouchableOpacity, View} from 'react-native';
 
 import {chatScreenHeader} from './chatScreenHeader-css';
 import BackIcon from 'react-native-vector-icons/Ionicons';
+import VideoCall from 'react-native-vector-icons/FontAwesome6';
 import useSocketIO from '../../../../utils/SocketIO';
 import {useSocket} from '../../../../SocketContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -43,12 +44,6 @@ const ChatScreenHeader = ({props}) => {
           onPress={() => props.navigation.navigate('ChatBody')}>
           <BackIcon name={'chevron-back'} size={25} color="#F3F3F3" />
         </TouchableOpacity>
-        {/* <View style={chatScreenHeader.headerImg}>
-          <Image
-            source={require('../../../../assets/images/user1.png')}
-            style={{width: 60, height: 60}}
-          />
-        </View> */}
 
         <View>
           <Avatar
@@ -70,6 +65,18 @@ const ChatScreenHeader = ({props}) => {
           <Text style={{color: '#fff', fontSize: 13, marginTop: 1}}>
             {props.route.params.email}
           </Text>
+        </View>
+        <View
+          style={{
+            alignItems: 'flex-end',
+            flexGrow: 1,
+            paddingRight: 30,
+          }}>
+          <TouchableOpacity
+            style={{paddingHorizontal: 10}}
+            onPress={() => Alert.alert('Video call', 'Video call Activated')}>
+            <VideoCall name={'video'} size={25} color="#F3F3F3" />
+          </TouchableOpacity>
         </View>
       </View>
     </View>

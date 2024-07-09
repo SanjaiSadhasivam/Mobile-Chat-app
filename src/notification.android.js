@@ -64,3 +64,11 @@ export const showNotification = (title, message) => {
     actions: ['Reply'],
   });
 };
+export const showRequests = (title, message) => {
+  console.log('logged:', title, message);
+  PushNotification.localNotification({
+    channelId: 'default-channel-ids',
+    title: title,
+    message: message,
+  });
+};
