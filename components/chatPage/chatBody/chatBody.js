@@ -56,6 +56,7 @@ import {
   AlertNotificationRoot,
   Dialog,
 } from 'react-native-alert-notification';
+import {ActivityIndicator} from 'react-native';
 
 const CustomBadge = ({label, color, style}) => {
   return (
@@ -125,157 +126,129 @@ const ChatBody = props => {
             Chats
           </Text>
         </View>
-        {chats.length > 0 ? (
-          <View>
-            {chats.map((item, i) => {
-              const unreadCount = unReadMsg[item?.recentMessage?.receiverId];
-              // const isActive = activeStatuses[i];
-              return (
-                <View key={i}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      socket.emit(
-                        'markMessagesAsRead',
-                        item?.recentMessage?.receiverId,
-                      );
-                      const ids = [userId, item._id].sort().join('_');
-                      const roomID = `chatRoom_${ids}`;
-                      props.navigation.navigate('ChatRoom', {
-                        name: item.name,
-                        receiverId: item._id,
-                        email: item.email,
-                        roomID,
-                      });
-                    }}
-                    // onPress={() => navigateToChatRoom(item)}
-                  >
-                    <View
-                      style={{
-                        marginTop: 20,
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                      }}>
-                      <View>
-                        <View style={{flexDirection: 'row'}}>
-                          <Text
-                            key={i}
-                            style={{
-                              color: '#FFC901',
-                              fontFamily: 'Poppins-Bold',
-                              fontSize: 20,
-                              marginRight: 10,
-                            }}>
-                            {item.name}
-                          </Text>
-                          {unreadCount > 0 && (
-                            <Badge
-                              label={unreadCount}
-                              style={{alignSelf: 'flex-start', top: 5}}
-                              color="#FFC901"
-                            />
-                          )}
-                        </View>
-                        <View>
-                          <Text
-                            numberOfLines={1}
-                            style={{
-                              color: '#fff',
-                              fontSize: 16,
-                              fontFamily: 'Poppins-SemiBold',
-                              width: 200,
-                            }}>
-                            {item?.recentMessage?.messages}
-                          </Text>
-                        </View>
-                      </View>
 
-                      {/* <View
-                        style={{
-                          borderColor: '#FFC901',
-                          borderWidth: 2,
-                          borderRadius: 100, // Half of the width/height for a perfect circle
-                          overflow: 'hidden', // Ensure the image stays within the border
-                          // marginRight: 15,
-                          height: 50,
-                          width: 50,
-                        }}>
-                        <Image
-                          source={require('../../../assets/images/user1.png')}
-                          style={{width: 50, height: 50}}
-                        />
-                      </View> */}
-
-                      <View
-                        style={{
-                          // borderColor: '#FFC901',
-                          // borderWidth: 2,
-                          // borderRadius: 100, // Half of the width/height for a perfect circle
-                          // overflow: 'hidden', // Ensure the image stays within the border
-                          // // marginRight: 15,
-                          height: 50,
-                          width: 50,
-                        }}>
-                        <Avatar
-                          rounded
-                          source={require('../../../assets/images/user1.png')}
-                          size="small"
-                          containerStyle={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 50,
-                          }}
-                        />
-                        {/* <View
-                          style={{
-                            // alignSelf: 'flex-start',
-                            // width: 10,
-                            // height: 10,
-                            borderRadius: 50,
-                            position: 'absolute',
-                            bottom: -10,
-                            right: 4,
-                          }}>
-                          <CustomBadge color={isActive ? '#47A850' : 'red'} />
-                        </View> */}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View>
-        ) : (
+        {loading ? (
           <View
             style={{
-              alignItems: 'center',
               justifyContent: 'center',
-              // width: '100%',
-              height: '85%',
-              // paddingHorizontal: 20,
+              alignItems: 'center',
+              // flexGrow: 1,
+              // height: '100%',
             }}>
-            <View
-              style={{
-                borderRadius: 20,
-                // backgroundColor: '#4E4C4C',
-                justifyContent: 'center',
-                alignItems: 'center',
-                paddingVertical: 50,
-
-                // padding: 0,
-                width: '100%',
-                // borderColor: '#FFC901',
-                // borderWidth: 1,
-              }}>
-              <FastImage
-                style={{width: 200, height: 200}}
-                source={require('../../../assets/images/nochats.gif')}
-                resizeMode={FastImage.resizeMode.contain}
-              />
-              <Text style={{color: '#fff', fontSize: 22}}>
-                No chats Found!!!
-              </Text>
-            </View>
+            <ActivityIndicator size="large" color="#FFC901" />
           </View>
+        ) : (
+          <>
+            {chats.length > 0 ? (
+              <View>
+                {chats.map((item, i) => {
+                  const unreadCount =
+                    unReadMsg[item?.recentMessage?.receiverId];
+                  return (
+                    <View key={i}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          socket.emit(
+                            'markMessagesAsRead',
+                            item?.recentMessage?.receiverId,
+                          );
+                          const ids = [userId, item._id].sort().join('_');
+                          const roomID = `chatRoom_${ids}`;
+                          props.navigation.navigate('ChatRoom', {
+                            name: item.name,
+                            receiverId: item._id,
+                            email: item.email,
+                            roomID,
+                          });
+                        }}>
+                        <View
+                          style={{
+                            marginTop: 20,
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                          }}>
+                          <View>
+                            <View style={{flexDirection: 'row'}}>
+                              <Text
+                                key={i}
+                                style={{
+                                  color: '#FFC901',
+                                  fontFamily: 'Poppins-Bold',
+                                  fontSize: 20,
+                                  marginRight: 10,
+                                }}>
+                                {item.name}
+                              </Text>
+                              {unreadCount > 0 && (
+                                <Badge
+                                  label={unreadCount}
+                                  style={{alignSelf: 'flex-start', top: 5}}
+                                  color="#FFC901"
+                                />
+                              )}
+                            </View>
+                            <View>
+                              <Text
+                                numberOfLines={1}
+                                style={{
+                                  color: '#fff',
+                                  fontSize: 16,
+                                  fontFamily: 'Poppins-SemiBold',
+                                  width: 200,
+                                }}>
+                                {item?.recentMessage?.messages}
+                              </Text>
+                            </View>
+                          </View>
+                          <View
+                            style={{
+                              height: 50,
+                              width: 50,
+                            }}>
+                            <Avatar
+                              rounded
+                              source={require('../../../assets/images/user1.png')}
+                              size="small"
+                              containerStyle={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: 50,
+                              }}
+                            />
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '85%',
+                }}>
+                <View
+                  style={{
+                    borderRadius: 20,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingVertical: 50,
+                    width: '100%',
+                  }}>
+                  <FastImage
+                    style={{width: 200, height: 200}}
+                    source={require('../../../assets/images/nochats.gif')}
+                    resizeMode={FastImage.resizeMode.contain}
+                  />
+                  <Text style={{color: '#fff', fontSize: 22}}>
+                    No chats Found!!!
+                  </Text>
+                </View>
+              </View>
+            )}
+          </>
         )}
       </View>
     </View>
@@ -718,14 +691,27 @@ const ChatBody = props => {
     }
   };
 
-  const getUserData = async () => {
+  const [loading, setLoading] = useState(true); // Start with loading as true
+
+  const getUserData = async (initial = false) => {
+    if (initial) {
+      setLoading(true);
+    }
+
     try {
       const response = await axios.get(BASE_URL + `/auth/user/${userId}`);
-
+      console.log(response.data, 'chatsList');
       setChats(response.data);
+      if (initial) {
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000); // Delay for 2 seconds
+      } else {
+        setLoading(false);
+      }
     } catch (error) {
       console.log('Error fetching user', error);
-      throw error;
+      // throw error;
     }
   };
 
@@ -753,7 +739,6 @@ const ChatBody = props => {
 
   useEffect(() => {
     socket.on('getRequest', data => {
-      console.log(data, 'datashagds');
       setnewRequest(!newRequest);
     });
     if (newRequest) {
@@ -808,6 +793,27 @@ const ChatBody = props => {
     }
   };
 
+  const [requestAccepted, setRequestAccepted] = useState(false);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('requestAcceptedFromReceiver', data => {
+      console.log(data, 'receivedfrom');
+
+      if (data) {
+        setRequestAccepted(true);
+        props.navigation.navigate('ChatBody');
+        setIndex(1);
+      }
+    });
+  }, [newRequest]);
+
+  useFocusEffect(
+    useCallback(() => {
+      getUserData();
+    }, [requestAccepted]),
+  );
+
   const acceptrequest = async (requestId, name, email) => {
     try {
       const response = await axios.post(BASE_URL + '/auth/acceptrequest', {
@@ -815,12 +821,13 @@ const ChatBody = props => {
         requestId: requestId,
       });
       if (response.status == 200) {
-        // setIndex(1);
-        // props.navigation.navigate('ChatRoom', {
-        //   name: name,
-        //   email: email,
-        // });
-        getUserData();
+        socket.emit('requestAccepted', {
+          userId: userId,
+          requestId: requestId,
+        });
+        setTimeout(() => {
+          getUserData();
+        }, 2000);
         await getRequest();
       }
     } catch (error) {
@@ -869,6 +876,7 @@ const ChatBody = props => {
                           width: 100,
                           paddingLeft: 10,
                           backgroundColor: '#aaa07c',
+                          paddingVertical: 10,
                         },
                       }}>
                       <TouchableOpacity

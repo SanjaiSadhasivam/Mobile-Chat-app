@@ -29,7 +29,7 @@ const ChatScreen = props => {
   const {userId} = useContext(AuthContext);
   const {socket, message, setMessage} = useSocketIO();
   const route = useRoute();
-
+  console.log(props.route.params.requestAccepted, 'propsData');
   // const GetDataById = id => {
   //   const data = userData.find(i => i.id == id);
   //   setUserDatas(data);
@@ -104,6 +104,12 @@ const ChatScreen = props => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (props.route.params.requestAccepted == true) {
+      props.navigation.navigate('ChatBody');
+    }
+  }, []);
 
   return (
     <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>

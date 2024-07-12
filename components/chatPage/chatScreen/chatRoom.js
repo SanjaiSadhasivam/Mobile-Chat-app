@@ -139,12 +139,10 @@ const ChatRoom = props => {
       setSelectedMessages([...selectedMessages, item]);
     }
   };
-
+  const [incomingCall, setIncomingCall] = useState(false);
   useEffect(() => {
     if (!socket) return;
-    socket.on('messagesDeleted', data => {
-      fetchMessages();
-    });
+    socket.on('messagesDeleted', data => {});
   }, [message]);
 
   const deleteSelectedMessages = async () => {
@@ -180,7 +178,12 @@ const ChatRoom = props => {
 
   return (
     <View style={{flexGrow: 1}}>
-      <ChatScreenHeader props={props} chatName={props.route.params.name} />
+      <ChatScreenHeader
+        props={props}
+        chatName={props.route.params.name}
+        incomingCall={incomingCall}
+        setIncomingCall={setIncomingCall}
+      />
       <KeyboardAvoidingView style={{flex: 1, backgroundColor: '#2C2929'}}>
         {/* <ScrollView
           ref={scrollViewRef}

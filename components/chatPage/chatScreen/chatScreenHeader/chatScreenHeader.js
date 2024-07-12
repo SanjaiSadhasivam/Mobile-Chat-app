@@ -10,10 +10,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {AuthContext} from '../../../../AuthContext';
 import {Avatar, Badge} from 'react-native-elements';
 
-const ChatScreenHeader = ({props}) => {
+const ChatScreenHeader = ({props, incomingCall, setIncomingCall}) => {
   const {activeUsers, isActive, socket} = useSocket();
   const [sctive, setsctive] = useState(false);
-  const {userName} = useContext(AuthContext);
+  const {userName, userId} = useContext(AuthContext);
   useEffect(() => {
     if (activeUsers) {
       setsctive(activeUsers?.includes(props.route.params.receiverId));
@@ -74,8 +74,21 @@ const ChatScreenHeader = ({props}) => {
           }}>
           <TouchableOpacity
             style={{paddingHorizontal: 10}}
-            onPress={() => Alert.alert('Video call', 'Video call Activated')}>
-            <VideoCall name={'video'} size={25} color="#F3F3F3" />
+            onPress={() =>
+              // props.navigation.navigate('VideoCall', {
+              //   roomID: props.route.params.roomID,
+              //   userId,
+              //   receiverId: props.route.params.receiverId,
+              // })
+              Alert.alert('Video call processing')
+            }>
+            <VideoCall
+              name={'video'}
+              size={25}
+              color="#F3F3F3"
+              incomingCall={incomingCall}
+              setIncomingCall={setIncomingCall}
+            />
           </TouchableOpacity>
         </View>
       </View>

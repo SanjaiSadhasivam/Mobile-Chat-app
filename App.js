@@ -13,7 +13,8 @@ import {AuthContext, AuthProvider} from './AuthContext';
 import {SocketProvider} from './SocketContext';
 import ChatRoom from './components/chatPage/chatScreen/chatRoom';
 import {AlertNotificationRoot} from 'react-native-alert-notification';
-import {useContext} from 'react';
+
+import VideoCall from './components/chatPage/videocall.js/videoCall';
 
 export default function App() {
   const Stack = createStackNavigator();
@@ -67,6 +68,11 @@ export default function App() {
                 <Stack.Screen
                   name="ChatRoom"
                   component={ChatRoom}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="VideoCall"
+                  component={VideoCall}
                   options={{headerShown: false}}
                 />
               </Stack.Navigator>

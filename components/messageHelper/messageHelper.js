@@ -74,9 +74,11 @@ export const groupMessagesByDate = messages => {
   const sortedKeys = Object.keys(groupedMessages).sort((a, b) => {
     if (a === 'Today') return 1;
     if (b === 'Today') return -1;
+    if (a === 'Yesterday') return 1;
+    if (b === 'Yesterday') return -1;
     return (
-      new Date(groupedMessages[b][0].timeStamp) -
-      new Date(groupedMessages[a][0].timeStamp)
+      new Date(groupedMessages[a][0].timeStamp) -
+      new Date(groupedMessages[b][0].timeStamp)
     );
   });
 
